@@ -104,26 +104,6 @@
  #mobile-sidebar-panel.open{transform:translateX(0)}
 }
 
-#global-search-panel,#gsr-panel{
- position:fixed!important;
- top:64px;
- left:0;right:0;
- z-index:99990!important;
- background:#06060e!important;
- border-top:2px solid var(--neon-blue)!important;
- box-shadow:0 8px 40px rgba(0,0,0,0.99)!important;
- max-height:320px;
- overflow-y:auto;
-}
-#global-search-panel .search-item,
-#gsr-panel > div{
- background:#06060e;
-}
-#global-search-panel > div:hover,
-#gsr-panel > div:hover{
- background:rgba(0,162,255,0.08)!important;
-}
-
 @media(max-width:768px){
  #stat-grid{gap:6px;margin-bottom:12px}
  #stat-grid .glass-panel{padding:8px 10px;border-left-width:3px}
@@ -237,6 +217,7 @@
                             Object.assign(DB, parsed);
                             Storage.saveLocal(DB);
                             try { UI.renderAll(); } catch(e) {}
+                            try { Admin.refreshAuditPanel(); } catch(e) {}
                             SupaSync.updateIndicator('synced');
                             SupaSync.showSyncToast(remoteOp);
                         }
@@ -269,6 +250,27 @@
             } catch(e) {}
         }
     };
+    SupaSync.pushAuditLog = async function(entry) {
+            try {
+                await fetch(SUPA_URL + '/rest/v1/audit_logs', {
+                    method: 'POST',
+                    headers: {...SUPA_HEADERS, 'Prefer': 'return=minimal'},
+                    body: JSON.stringify({
+                        log_id: entry.id, type: entry.type, message: entry.message,
+                        operator: entry.operator || 'SYSTEM',
+                        record_id: entry.recordId || null,
+                        ts: entry.timestamp || new Date().toISOString()
+                    })
+                });
+            } catch(e) {}
+        };
+        SupaSync.fetchAuditLogs = async function() {
+            try {
+                const res = await fetch(SUPA_URL + '/rest/v1/audit_logs?order=ts.desc&limit=200', {headers: SUPA_HEADERS});
+                if(!res.ok) return null;
+                return await res.json();
+            } catch(e) { return null; }
+        };
     window.SupaSync = SupaSync;
     </script>
 
@@ -2488,25 +2490,16 @@
                 <div id="view-admin" class="view-section max-w-6xl mx-auto hidden">
                     <div class="flex justify-between items-center mb-6 border-b border-cyber-red/30 pb-4">
                         <h2 class="font-display text-2xl text-cyber-red glitch uppercase" data-text="System Override">System Override</h2>
-                        <div class="flex gap-3 flex-wrap">
-                            <button onclick="Admin.exportStandaloneHTML()" class="cyber-button px-3 py-2 text-xs click-sfx hover-sfx" style="border-color: var(--neon-purple); color: var(--neon-purple);" title="Verileri kodun içine gömer ve paylaşılabilir tek bir HTML dosyası olarak indirir"><i class="fas fa-file-code mr-2"></i>Gömülü HTML İndir (Seed)</button>
-                            <button onclick="Admin.exportDB()" class="cyber-button px-3 py-2 text-xs click-sfx hover-sfx" title="Sadece Veritabanını JSON Olarak İndir"><i class="fas fa-download mr-2"></i>Backup DB</button>
-                            <label class="cyber-button px-3 py-2 text-xs cursor-pointer hover-sfx" title="Mevcut Veritabanını Tamamen Siler ve Yükleneni Yazar">
-                                <i class="fas fa-upload mr-2"></i>Replace DB
-                                <input type="file" class="hidden click-sfx" accept=".json" onchange="Admin.importAndReplaceDB(event)">
-                            </label>
-                            <label class="cyber-button px-3 py-2 text-xs cursor-pointer hover-sfx" style="border-color: var(--neon-gold); color: var(--neon-gold);" title="Mevcut Verileri Silmeden Yenileri Üzerine Ekler (Günceller)">
-                                <i class="fas fa-object-group mr-2"></i>Merge DB
-                                <input type="file" class="hidden click-sfx" accept=".json" onchange="Admin.importAndMergeDB(event)">
-                            </label>
-                            <button onclick="restoreAutoBackup()" class="cyber-button px-3 py-2 text-xs click-sfx hover-sfx" style="border-color:var(--neon-purple);color:var(--neon-purple)" title="Son 5 otomatik yedekten birine dön"><i class="fas fa-undo mr-2"></i>GERİ AL</button>
-                            <div class="flex items-center gap-2 mr-3 border-r border-gray-700 pr-3">
+                        <div class="flex gap-3 flex-wrap items-center">
+                            <button onclick="Admin.exportDB()" class="cyber-button px-3 py-2 text-xs click-sfx hover-sfx" title="Veritabanını JSON olarak indir (yedek)"><i class="fas fa-download mr-2"></i>Backup DB</button>
+
+                            <div class="flex items-center gap-2">
                                 <span class="font-mono text-[9px] text-gray-500 tracking-widest">CURSOR ANİM</span>
                                 <button id="cursor-anim-toggle" onclick="UI.toggleCursorAnim()" class="relative w-10 h-5 rounded-full border border-gray-600 transition-colors flex-shrink-0" style="background:rgba(0,162,255,0.3);border-color:var(--neon-blue)" title="İmleç animasyonunu aç/kapat">
                                     <span id="cursor-anim-knob" class="absolute top-0.5 left-0.5 w-4 h-4 rounded-full transition-transform" style="background:var(--neon-blue);transform:translateX(20px)"></span>
                                 </button>
                             </div>
-                            <div class="flex items-center gap-1.5 mr-2">
+                            <div class="flex items-center gap-1.5">
                                 <span class="font-mono text-[9px] text-gray-500 tracking-widest">TEMA</span>
                                 <button onclick="UI.applyTheme('cyber')"   class="theme-btn" data-theme="cyber"   style="background:#00a2ff" title="Cyber Blue"></button>
                                 <button onclick="UI.applyTheme('crimson')" class="theme-btn" data-theme="crimson" style="background:#ff2a2a" title="Kızıl Şehir"></button>
@@ -2514,8 +2507,6 @@
                                 <button onclick="UI.applyTheme('violet')"  class="theme-btn" data-theme="violet"  style="background:#a855f7" title="Mor Gece"></button>
                                 <button onclick="UI.applyTheme('gold')"    class="theme-btn" data-theme="gold"    style="background:#f59e0b" title="Altın Çağ"></button>
                             </div>
-                            <button onclick="Admin.hardReset()" class="cyber-button danger px-3 py-2 text-xs click-sfx hover-sfx"><i class="fas fa-trash-alt mr-2"></i>HARD RESET</button>
-                            <button onclick="UI.showBackupPanel()" class="cyber-button px-3 py-2 text-xs click-sfx hover-sfx" style="border-color:#a855f7;color:#a855f7"><i class="fas fa-history mr-2"></i>GERİ AL</button>
                         </div>
                     </div>
 
@@ -2675,6 +2666,7 @@
                                 <i class="fas fa-history mr-2"></i>İşlem Geçmişi
                             </h3>
                             <div class="flex gap-2">
+                                <span class="font-mono text-[9px] text-cyber-green flex items-center gap-1"><i class="fas fa-circle text-[6px] animate-pulse"></i>CANLI</span>
                                 <button onclick="Admin.refreshAuditPanel()" class="cyber-button px-3 py-1 text-[10px] click-sfx hover-sfx"><i class="fas fa-sync mr-1"></i>YENILE</button>
                                 <button onclick="Admin.clearAuditLog()" class="cyber-button danger px-3 py-1 text-[10px] click-sfx hover-sfx"><i class="fas fa-trash mr-1"></i>TEMİZLE</button>
                             </div>
@@ -3977,36 +3969,12 @@
      const setVH=()=>document.documentElement.style.setProperty('--vh',(window.innerHeight*.01)+'px');
      setVH();window.addEventListener('resize',setVH);
     }
-    const AUTO_BACKUP_KEY = 'nyc_autobackup';
-    const MAX_BACKUPS = 5;
-    function saveAutoBackup() {
-     try {
-      const snapshots = JSON.parse(localStorage.getItem(AUTO_BACKUP_KEY) || '[]');
-      snapshots.unshift({ ts: new Date().toISOString(), data: JSON.stringify(DB) });
-      if(snapshots.length > MAX_BACKUPS) snapshots.length = MAX_BACKUPS;
-      localStorage.setItem(AUTO_BACKUP_KEY, JSON.stringify(snapshots));
-     } catch(e) { console.warn('Auto-backup failed:', e); }
-    }
-    function restoreAutoBackup(index) {
-     try {
-      const snapshots = JSON.parse(localStorage.getItem(AUTO_BACKUP_KEY) || '[]');
-      const snap = snapshots[index];
-      if(!snap) return alert('Yedek bulunamadı.');
-      if(!confirm(`${new Date(snap.ts).toLocaleString('tr-TR')} tarihli yedeğe geri dönülsün mü?`)) return;
-      const parsed = Storage.migrateDB(JSON.parse(snap.data));
-      Object.assign(DB, parsed);
-      Storage.save(DB); UI.renderAll();
-      Admin.addAuditLog('system', `Oto-yedekten geri yüklendi: ${new Date(snap.ts).toLocaleString('tr-TR')}`);
-      alert('✓ Geri yükleme tamamlandı.');
-     } catch(e) { alert('Geri yükleme hatası: ' + e.message); }
-    }
-    window.restoreAutoBackup = restoreAutoBackup;
     
 
-    saveAutoBackup();
-    setInterval(saveAutoBackup, 10 * 60 * 1000);
 
     // Supabase polling (30sn'de bir sync kontrolü)
+    // Eski arama panellerini temizle
+    ['gsr-panel','global-search-panel','srp'].forEach(id => { const el=document.getElementById(id); if(el)el.remove(); });
     try { SupaSync.startPolling(30000); } catch(e) {}
 
     const savedTheme = localStorage.getItem('nyc_theme') || '';
@@ -4015,11 +3983,20 @@
 
     
     document.getElementById('search-input').addEventListener('blur', () => {
-     setTimeout(() => { const p=document.getElementById('global-search-panel'); if(p) p.style.display='none'; }, 200);
+     setTimeout(() => { const p=document.getElementById('srp'); if(p) p.style.display='none'; }, 200);
+    });
+    // Herhangi bir yere tıklayınca kapat (search input veya panel dışı)
+    document.addEventListener('click', (e) => {
+     const panel = document.getElementById('srp');
+     const input = document.getElementById('search-input');
+     if(!panel || panel.style.display === 'none') return;
+     if(!panel.contains(e.target) && e.target !== input && !input?.contains(e.target)) {
+      panel.style.display = 'none';
+     }
     });
     document.getElementById('search-input').addEventListener('input', e => {
      activeFilters.search = e.target.value.toLowerCase();
-     UI.renderGlobalSearchResults(activeFilters.search);
+     try{UI.renderGlobalSearchResults(activeFilters.search);}catch(e){}
      this.renderCharacters();
      this.renderVehicles();
      this.renderProperties();
@@ -4333,89 +4310,41 @@
     html2pdf().set(opt).from(div).save();
    },
 
-   showBackupPanel() {
-    const snapshots = JSON.parse(localStorage.getItem('nyc_autobackup') || '[]');
-    let m = document.getElementById('backup-panel-modal');
-    if(!m) {
-     m = document.createElement('div');
-     m.id = 'backup-panel-modal';
-     m.className = 'fixed inset-0 bg-black/90 z-[160] flex items-center justify-center p-4';
-     m.onclick = e => { if(e.target===m) m.style.display='none'; };
-     document.body.appendChild(m);
-    }
-    m.innerHTML = `<div class="glass-panel max-w-lg w-full border-t-4 p-6" style="border-color:#a855f7">
-     <div class="flex justify-between items-center mb-4">
-      <h2 class="font-mono text-sm uppercase tracking-widest" style="color:#a855f7"><i class="fas fa-history mr-2"></i>Otomatik Yedekler</h2>
-      <button onclick="document.getElementById('backup-panel-modal').style.display='none'" class="cyber-button px-3 py-1 text-xs"><i class="fas fa-times"></i></button>
-     </div>
-     ${!snapshots.length ? '<p class="font-mono text-xs text-gray-600 text-center py-6">Henüz yedek yok.<br><span class="text-gray-700">İlk yedek 10 dakika sonra oluşturulur.</span></p>' :
-     snapshots.map((s,i) => {
-      const d = new Date(s.ts);
-      const db = JSON.parse(s.data);
-      return `<div class="flex justify-between items-center p-3 border border-gray-800 mb-2 font-mono text-xs">
-       <div>
-        <div class="text-white">${d.toLocaleString('tr-TR')}</div>
-        <div class="text-gray-500">${db.characters?.length||0} karakter · ${db.organizations?.length||0} org</div>
-       </div>
-       <button onclick="restoreAutoBackup(${i});document.getElementById('backup-panel-modal').style.display='none'" class="cyber-button px-4 py-1 text-[10px] click-sfx hover-sfx" style="border-color:#a855f7;color:#a855f7">GERİ YÜKlE</button>
-      </div>`;
-     }).join('')}
-    </div>`;
-    m.style.display = 'flex';
-   },
 
    renderGlobalSearchResults(q) {
-    let panel = document.getElementById('global-search-panel');
-    if(!q || q.length < 2) { if(panel) panel.style.display='none'; return; }
+    // Her zaman body'deki TEK paneli kullan
+    let panel = document.getElementById('srp'); // search-results-panel
+    if(!q || q.length < 2) {
+     if(panel) panel.style.display = 'none';
+     return;
+    }
+    // Panel yoksa bir kez oluştur
     if(!panel) {
      panel = document.createElement('div');
-     panel.id = 'global-search-panel';
+     panel.id = 'srp';
+     panel.style.cssText = 'position:fixed;left:0;right:0;z-index:99990;max-height:320px;overflow-y:auto;background:#06060e;border-top:2px solid var(--neon-blue);border-bottom:1px solid rgba(0,162,255,0.2);box-shadow:0 8px 32px rgba(0,0,0,0.98);font-family:\'Share Tech Mono\',monospace;font-size:12px;display:none';
      document.body.appendChild(panel);
     }
+    // Pozisyonu header altına güncelle
+    const hdr = document.querySelector('header');
+    panel.style.top = (hdr ? hdr.getBoundingClientRect().bottom : 64) + 'px';
+
     const res = [];
-    DB.organizations.filter(o=>o.name.toLowerCase().includes(q)).slice(0,3).forEach(o=>
-     res.push({type:'ORG',icon:'fa-sitemap',label:o.name,color:o.color,action:`UI.switchTab('organizations')`}));
-    DB.contracts.filter(c=>!c.archived&&(c.target||'').toLowerCase().includes(q)).slice(0,3).forEach(c=>
-     res.push({type:'CONTRACT',icon:'fa-crosshairs',label:c.target,color:'var(--neon-red)',action:`UI.openContractModal('${c.id}')`}));
-    DB.cases.filter(cf=>!cf.archived&&(cf.title||'').toLowerCase().includes(q)).slice(0,3).forEach(cf=>
-     res.push({type:'DAVA',icon:'fa-folder-open',label:cf.title,color:'var(--neon-gold)',action:`UI.openCaseModal('${cf.id}')`}));
-    (DB.events||[]).filter(ev=>(ev.title||'').toLowerCase().includes(q)).slice(0,2).forEach(ev=>
-     res.push({type:'OLAY',icon:`fa-${ev.icon||'bolt'}`,label:ev.title,color:ev.color||'#a855f7',action:`UI.switchTab('radar')`}));
     DB.characters.filter(c=>!c.isClassified&&(c.name.toLowerCase().includes(q)||(c.alias||'').toLowerCase().includes(q))).slice(0,3).forEach(c=>
-     res.push({type:'KAR',icon:'fa-user-secret',label:c.name+(c.alias?` / ${c.alias}`:''),color:'var(--neon-blue)',action:`UI.openModal('${c.id}')`}));
+     res.push({type:'KAR',icon:'fa-user-secret',label:c.name+(c.alias?' / '+c.alias:''),color:'var(--neon-blue)',action:"UI.openModal('"+c.id+"')"}));
+    DB.organizations.filter(o=>o.name.toLowerCase().includes(q)).slice(0,2).forEach(o=>
+     res.push({type:'ORG',icon:'fa-sitemap',label:o.name,color:o.color,action:"UI.switchTab('organizations')"}));
+    DB.contracts.filter(c=>!c.archived&&(c.target||'').toLowerCase().includes(q)).slice(0,2).forEach(c=>
+     res.push({type:'KONTRAT',icon:'fa-crosshairs',label:c.target,color:'var(--neon-red)',action:"UI.openContractModal('"+c.id+"')"}));
+    DB.cases.filter(cf=>!cf.archived&&(cf.title||'').toLowerCase().includes(q)).slice(0,2).forEach(cf=>
+     res.push({type:'DAVA',icon:'fa-folder-open',label:cf.title,color:'var(--neon-gold)',action:"UI.openCaseModal('"+cf.id+"')"}));
+    (DB.events||[]).filter(ev=>(ev.title||'').toLowerCase().includes(q)).slice(0,2).forEach(ev=>
+     res.push({type:'OLAY',icon:'fa-bolt',label:ev.title,color:ev.color||'#a855f7',action:"UI.switchTab('radar')"}));
 
     if(!res.length) { panel.style.display='none'; return; }
 
-    // Header'ın tam altına sabitle
-    const hdrEl = document.querySelector('header');
-    const hdrRect = hdrEl ? hdrEl.getBoundingClientRect() : {bottom:64};
-    panel.style.cssText = [
-     'position:fixed',
-     `top:${hdrRect.bottom}px`,
-     'left:0',
-     'right:0',
-     'z-index:99990',
-     'max-height:320px',
-     'overflow-y:auto',
-     'background:#06060e',
-     'border-top:2px solid var(--neon-blue)',
-     'border-bottom:1px solid rgba(0,162,255,0.3)',
-     'box-shadow:0 12px 48px rgba(0,0,0,0.99),inset 0 1px 0 rgba(0,162,255,0.1)',
-     'font-family:\'Share Tech Mono\',monospace',
-     'font-size:12px',
-     'display:block'
-    ].join(';');
-
-    panel.innerHTML = res.map(r =>
-     `<div style="display:flex;align-items:center;gap:12px;padding:10px 16px;border-bottom:1px solid rgba(255,255,255,0.05);cursor:pointer;background:#06060e;transition:background .1s"
-      onmouseover="this.style.background='rgba(0,162,255,0.08)'"
-      onmouseout="this.style.background='#06060e'"
-      onclick="${r.action};document.getElementById('global-search-panel').style.display='none';document.getElementById('search-input').blur()">
-      <i class="fas ${r.icon}" style="color:${r.color};width:16px;text-align:center;flex-shrink:0"></i>
-      <span style="color:#4b5563;font-size:9px;text-transform:uppercase;width:52px;flex-shrink:0">${r.type}</span>
-      <span style="color:#e2e8f0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${r.label}</span>
-     </div>`
-    ).join('');
+    panel.innerHTML = res.map(r=>'<div onclick="'+r.action+';document.getElementById(\'srp\').style.display=\'none\';document.getElementById(\'search-input\').blur()" style="display:flex;align-items:center;gap:12px;padding:10px 16px;border-bottom:1px solid rgba(255,255,255,0.05);cursor:pointer;background:#06060e" onmouseover="this.style.background=\'rgba(0,162,255,0.08)\'" onmouseout="this.style.background=\'#06060e\'"><i class="fas '+r.icon+'" style="color:'+r.color+';width:16px;text-align:center;flex-shrink:0"></i><span style="color:#4b5563;font-size:9px;text-transform:uppercase;width:52px;flex-shrink:0">'+r.type+'</span><span style="color:#e2e8f0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+r.label+'</span></div>').join('');
+    panel.style.display = 'block';
    },
 
    applyTheme(name) {
@@ -5678,141 +5607,7 @@
   };
 
   const Admin = {
-   exportStandaloneHTML() {
-    
-
-    UI.closeAllModals();
-
-    
-
-    const cloneDom = document.documentElement.cloneNode(true);
-
-    
-
-    const initScreen = cloneDom.querySelector('#init-screen');
-    if(initScreen) initScreen.className = "fixed inset-0 bg-black z-[10000] flex items-center justify-center cursor-pointer transition-opacity duration-1000";
-    
-    const bootScreen = cloneDom.querySelector('#boot-screen');
-    if(bootScreen) {
-     bootScreen.className = "fixed inset-0 bg-black z-[9999] flex flex-col items-start justify-end p-12 font-mono text-cyber-green text-sm pointer-events-none hidden opacity-100 transition-opacity duration-1000";
-     const bootLogs = bootScreen.querySelector('#boot-logs');
-     if(bootLogs) bootLogs.innerHTML = ''; 
-    }
-
-    const appWrapper = cloneDom.querySelector('#app-wrapper');
-    if(appWrapper) appWrapper.style.filter = "brightness(0.2)";
-
-    
-
-    cloneDom.querySelectorAll('.view-section').forEach(el => el.classList.add('hidden'));
-    const viewDash = cloneDom.querySelector('#view-dashboard');
-    if(viewDash) viewDash.classList.remove('hidden');
-
-    
-
-    cloneDom.querySelectorAll('.nav-link').forEach(el => {
-     el.className = "nav-link click-sfx hover-sfx w-full text-left p-2 transition-colors border-l-2 border-transparent text-gray-400 hover:text-white";
-    });
-    const dashNav = cloneDom.querySelector('.nav-link'); 
-    if(dashNav) dashNav.className = "nav-link click-sfx hover-sfx w-full text-left p-2 hover:bg-cyber-blue/10 hover:text-cyber-blue text-white bg-cyber-blue/10 transition-colors border-l-2 border-cyber-blue";
-
-    const loginModal = cloneDom.querySelector('#admin-login-modal');
-    if(loginModal) loginModal.classList.add('hidden');
-    const cloneCharList = cloneDom.querySelector('#admin-list-chars');
-    if(cloneCharList) cloneCharList.innerHTML = '';
-    const cloneTabBar = cloneDom.querySelector('#tab-bar');
-    if(cloneTabBar) cloneTabBar.innerHTML = '';
-
-    
-
-    let currentHTML = "<!DOCTYPE html>\n" + cloneDom.outerHTML;
-    const dbString = JSON.stringify(DB).replace(/</g, '\\u003c');
-    const replacement = `const SEED_DB = ${dbString}; // __SEED_MARKER__`;
-    currentHTML = currentHTML.replace(/const SEED_DB = .*?; \/\/ __SEED_MARKER__/g, replacement);
-
-    
-
-    const blob = new Blob([currentHTML], { type: 'text/html;charset=utf-8' });
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    a.download = `NYC_Dashboard_Seeded_${new Date().toISOString().split('T')[0]}.html`;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    URL.revokeObjectURL(a.href);
-    
-    alert("Sistem başarıyla kodun içine gömüldü ve tek parça HTML olarak indirildi! Bu dosyayı arkadaşlarına atabilirsin, tıkladıkları an bu verilerle ve giriş ekranıyla açılacaktır.");
-   },
    exportDB() { Storage.export(DB); },
-   importAndReplaceDB(e) {
-    const file = e.target.files[0];
-    if(!file) return;
-    const r = new FileReader();
-    r.onload = (ev) => {
-     try { 
-      const raw = JSON.parse(ev.target.result);
-      if(raw.characters && raw.organizations) {
-       const parsed = Storage.migrateDB(raw);
-       DB = {
-        metadata: parsed.metadata || { version: '10.0', lastUpdated: new Date().toISOString() },
-        organizations: parsed.organizations || [],
-        characters: parsed.characters || [],
-        vehicles: parsed.vehicles || [],
-        properties: parsed.properties || [],
-        equipments: parsed.equipments || [],
-        contracts: parsed.contracts || [],
-        cases: parsed.cases || [],
-        logs: parsed.logs || [],
-        auditLogs: parsed.auditLogs || [],
-      events: parsed.events || []
-       };
-       const replOp = parsed.metadata?.lastSavedBy || 'UNKNOWN';
-       Admin.addAuditLog('system', `DB Replace: ${file.name} — Orijinal Operatör: [${replOp}]`, null, window.currentOperator||'SYSTEM');
-       Storage.save(DB); 
-       UI.renderAll(); 
-       alert("Database REPLACED successfully. Mevcut veritabanı SİLİNDİ ve yüklediğin dosya yazıldı!"); 
-      } else { alert("Invalid database structure."); }
-     } catch(err) { alert("Error parsing JSON file. Dosyada yazım hatası var."); }
-    };
-    r.readAsText(file);
-    e.target.value = ''; 
-   },
-   importAndMergeDB(e) {
-    const file = e.target.files[0];
-    if(!file) return;
-    const r = new FileReader();
-    r.onload = (ev) => {
-     try { 
-      const rawMerge = JSON.parse(ev.target.result);
-      const parsed = Storage.migrateDB(rawMerge);
-      if(parsed.characters && parsed.organizations) {
-       ['organizations', 'characters', 'vehicles', 'properties', 'equipments', 'contracts', 'cases', 'logs', 'auditLogs', 'events'].forEach(table => {
-        if (parsed[table] && Array.isArray(parsed[table])) {
-         parsed[table].forEach(newItem => {
-          const existingIdx = DB[table].findIndex(item => item.id === newItem.id);
-          if (existingIdx >= 0) DB[table][existingIdx] = newItem;
-          else DB[table].push(newItem);
-         });
-        }
-       });
-       const mergeOp = parsed.metadata?.lastSavedBy || 'UNKNOWN';
-       const mergeDate = parsed.metadata?.lastUpdated ? new Date(parsed.metadata.lastUpdated).toLocaleString('tr-TR') : '?';
-       Admin.addAuditLog('system', `JSON Merge: ${file.name} — Orijinal Operatör: [${mergeOp}] ${mergeDate}`, null, window.currentOperator||'SYSTEM');
-       Storage.save(DB); 
-       UI.renderAll(); 
-       alert("Database MERGED successfully. Eski veriler korundu, eksik/yeni olanlar eklendi!"); 
-      } else { alert("Invalid database structure."); }
-     } catch(err) { alert("Error parsing JSON file. Dosyada yazım hatası var."); }
-    };
-    r.readAsText(file);
-    e.target.value = ''; 
-   },
-   hardReset() {
-    if(confirm("⚠ DANGER: This will permanently PURGE the entire database and reset to default. This cannot be undone. Proceed?")) {
-     localStorage.removeItem(Storage.KEY);
-     location.reload();
-    }
-   },
    login() {
     const loginModal = document.getElementById('admin-login-modal');
     if(loginModal) loginModal.classList.add('hidden');
@@ -6860,11 +6655,9 @@
      timeFormatted: formatAuditTime()
     };
     if(!DB.auditLogs) DB.auditLogs = [];
-    DB.auditLogs.unshift(entry); 
-
-    
-
+    DB.auditLogs.unshift(entry);
     if(DB.auditLogs.length > 500) DB.auditLogs = DB.auditLogs.slice(0, 500);
+    try { SupaSync.pushAuditLog(entry); } catch(e) {}
     Storage.save(DB);
     this.refreshAuditPanel();
     
@@ -6879,6 +6672,30 @@
     const list = document.getElementById('audit-log-list');
     const countEl = document.getElementById('audit-count');
     if(!list) return;
+    // Supabase'den arka planda çek ve birleştir
+    try {
+     SupaSync.fetchAuditLogs().then(rows => {
+      if(!rows || !rows.length) return;
+      const existing = new Set((DB.auditLogs||[]).map(e=>e.id));
+      let added = 0;
+      rows.forEach(r => {
+       if(!existing.has(r.log_id)) {
+        DB.auditLogs = DB.auditLogs || [];
+        DB.auditLogs.push({
+         id: r.log_id, type: r.type, message: r.message,
+         operator: r.operator, recordId: r.record_id,
+         timestamp: r.ts,
+         timeFormatted: (() => { try { return new Date(r.ts).toLocaleString('tr-TR',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit',second:'2-digit'}); } catch(e){return r.ts;} })()
+        });
+        added++;
+       }
+      });
+      if(added > 0) {
+       DB.auditLogs.sort((a,b) => (b.timestamp||'').localeCompare(a.timestamp||''));
+       this.refreshAuditPanel(filterType, searchText);
+      }
+     }).catch(()=>{});
+    } catch(e) {}
     
 
     document.querySelectorAll('.audit-filter-btn').forEach(b => {
@@ -7283,7 +7100,6 @@
   
 
  </script>
-
 
     <!-- Mobil Sidebar Overlay -->
     <div id="mobile-sidebar-overlay" onclick="UI.closeMobileMenu()"></div>
