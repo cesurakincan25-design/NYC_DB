@@ -125,6 +125,32 @@
             transition: color .3s;
             min-width: 70px;
         }
+
+/* ── Mobil iyileştirmeler ── */
+body.is-mobile header { height: 52px; padding-left: 8px; padding-right: 8px; }
+body.is-mobile #main-content { padding-bottom: 60px; }
+body.is-mobile .view-section { padding: 8px; }
+body.is-mobile #character-grid { grid-template-columns: repeat(2, minmax(0,1fr)); gap: 8px; padding: 8px; }
+body.is-mobile .cyber-card { font-size: 11px; }
+body.is-mobile .cyber-card .h-60 { height: 140px; }
+body.is-mobile .cyber-card .font-display { font-size: 14px; }
+body.is-mobile #char-modal { align-items: flex-start; }
+body.is-mobile #char-modal > div { border-radius: 0; min-height: 100vh; margin: 0; }
+body.is-mobile .glass-panel { border-radius: 4px; }
+body.is-mobile .max-w-5xl { padding: 8px !important; }
+/* Mobil modal: sol/sağ panel üst üste */
+body.is-mobile .md\:grid-cols-2 { grid-template-columns: 1fr !important; }
+body.is-mobile .md\:grid-cols-3 { grid-template-columns: 1fr !important; }
+body.is-mobile .md\:grid-cols-4 { grid-template-columns: repeat(2,1fr) !important; }
+/* Mobil stat bar */
+body.is-mobile #stat-grid { grid-template-columns: repeat(2,1fr); gap: 6px; margin-bottom: 8px; }
+body.is-mobile #stat-grid .glass-panel { padding: 8px 10px; }
+body.is-mobile #stat-grid .text-3xl { font-size: 1.2rem; }
+/* Harita mobil */
+body.is-mobile #radar-container { height: calc(100vh - 120px); }
+/* Tab bar aktif renk */
+#mobile-tabbar button.active { color: var(--neon-blue); border-top: 2px solid var(--neon-blue); }
+#mobile-tabbar button { border-top: 2px solid transparent; transition: color .15s, border-color .15s; }
 </style>    <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     
@@ -170,11 +196,12 @@
                 return;
             }
             this._saving = true;
+            const saveTimestamp = new Date().toISOString();
             try {
                 const payload = {
                     data: data,
                     updated_by: operator || window.currentOperator || 'SYSTEM',
-                    updated_at: new Date().toISOString()
+                    updated_at: saveTimestamp
                 };
                 const res = await fetch(SUPA_URL + '/rest/v1/nyc_db?id=eq.main', {
                     method: 'PATCH',
@@ -186,6 +213,8 @@
                     throw new Error('HTTP ' + res.status + ': ' + err);
                 }
                 // Sync göstergesi güncelle
+                SupaSync._lastSavedAt = saveTimestamp;
+                SupaSync._lastRemoteHash = null; // Polling hash'i sıfırla
                 SupaSync.updateIndicator('saved');
             } catch(e) {
                 console.error('[SupaSync] Save failed:', e.message);
@@ -194,7 +223,7 @@
                 this._saving = false;
                 if(this._pendingSave) {
                     this._pendingSave = false;
-                    setTimeout(() => SupaSync.save(DB, window.currentOperator), 500);
+                    setTimeout(() => SupaSync.save(DB, window.currentOperator), 1000); // DB her zaman güncel
                 }
             }
         },
@@ -207,12 +236,23 @@
                     const remote = await this.load();
                     if(!remote) return;
                     // Hash karşılaştır
-                    const remoteHash = JSON.stringify(remote.data).length + '_' + remote.updatedAt;
-                    if(this._lastRemoteHash && remoteHash !== this._lastRemoteHash) {
+                    const remoteHash = remote.updatedAt || '';
+                    // İlk çalışmada sadece hash'i kaydet, veri çekme
+                    if(!this._lastRemoteHash) {
+                        this._lastRemoteHash = remoteHash;
+                        return;
+                    }
+                    // Hash değiştiyse kontrol et
+                    if(remoteHash !== this._lastRemoteHash) {
+                        this._lastRemoteHash = remoteHash;
                         const remoteOp = remote.updatedBy || 'UNKNOWN';
                         const localOp  = window.currentOperator || 'SYSTEM';
-                        // Başkası kaydettiyse güncelle
-                        if(remoteOp !== localOp) {
+                        // Sadece başkası kaydettiyse VE kendi son save'imizden sonraysa uygula
+                        const remoteTime  = new Date(remote.updatedAt || 0).getTime();
+                        const lastSavedAt = new Date(this._lastSavedAt || 0).getTime();
+                        const isMine = remoteOp === localOp || (localOp !== 'SYSTEM' && remoteOp === localOp);
+                        const isAfterMySave = remoteTime > lastSavedAt + 2000; // 2sn tolerans
+                        if(!isMine && isAfterMySave) {
                             const parsed = Storage.migrateDB(remote.data);
                             Object.assign(DB, parsed);
                             Storage.saveLocal(DB);
@@ -222,7 +262,6 @@
                             SupaSync.showSyncToast(remoteOp);
                         }
                     }
-                    this._lastRemoteHash = remoteHash;
                 } catch(e) { /* polling sessiz fail */ }
             }, intervalMs || 30000); // 30 saniyede bir kontrol
         },
@@ -2735,7 +2774,16 @@
                             <div class="md:col-span-2"><label class="text-cyber-blue block mb-1">Hierarchy / Rank Structure</label><input type="text" id="o-hierarchy" placeholder="e.g. Boss > Capo > Soldier"></div>
                             <div class="md:col-span-2"><label class="text-cyber-blue block mb-1" data-i18n="org_desc">Description / Intel</label><textarea id="o-desc" rows="3"></textarea></div>
                             <div class="md:col-span-2"><label class="text-cyber-blue block mb-1">Notes / Intelligence</label><textarea id="o-notes" rows="2" placeholder="Classified notes, recent activity..."></textarea></div>
-                            <div class="md:col-span-2"><label class="text-cyber-blue block mb-1">External Links (comma-separated URLs)</label><input type="text" id="o-links" placeholder="https://discord.com/..."></div>
+                           <div class="md:col-span-2 border-t border-gray-800 pt-4 mt-2">
+                                <label class="text-cyber-blue block mb-2 text-xs tracking-widest uppercase">Üyeler / Roller</label>
+                                <div class="flex gap-2 mb-2 flex-wrap">
+                                    <select id="o-member-char" class="flex-1 min-w-[150px]"></select>
+                                    <input type="text" id="o-member-role" placeholder="Rütbe/Rol (örn: Lider, Enforcer...)" class="flex-1 min-w-[150px]">
+                                    <button type="button" onclick="Admin.addOrgMember()" class="cyber-button click-sfx px-4 text-xs">+ EKLE</button>
+                                </div>
+                                <div id="o-member-list" class="space-y-1 max-h-40 overflow-y-auto"></div>
+                            </div>
+                 <div class="md:col-span-2"><label class="text-cyber-blue block mb-1">External Links (comma-separated URLs)</label><input type="text" id="o-links" placeholder="https://discord.com/..."></div>
                             <div>
                                 <label class="text-cyber-blue block mb-1">İlişkili Mülkler (Property ID'leri, virgülle)</label>
                                 <input type="text" id="o-linked-props" placeholder="prop_id1, prop_id2...">
@@ -2750,6 +2798,9 @@
                             </div>
                         </form>
                         <div class="mt-8 pt-4 border-t border-gray-800">
+                            <input type="text" id="admin-orgs-search" placeholder="Organizasyon ara..."
+                                class="w-full bg-black/60 border border-gray-700 text-gray-300 font-mono text-xs px-3 py-2 mb-2 focus:border-cyber-blue outline-none"
+                                oninput="Admin.filterOrgList(this.value)">
                             <div id="admin-list-orgs" class="max-h-60 overflow-y-auto space-y-1 font-mono text-xs pr-2"></div>
                         </div>
                     </div>
@@ -2791,6 +2842,9 @@
                             </div>
                         </form>
                         <div class="mt-8 pt-4 border-t border-gray-800">
+                            <input type="text" id="admin-vehicles-search" placeholder="Araç ara..."
+                                class="w-full bg-black/60 border border-gray-700 text-gray-300 font-mono text-xs px-3 py-2 mb-2 focus:border-cyber-blue outline-none"
+                                oninput="Admin.filterVehicleList(this.value)">
                             <div id="admin-list-vehicles" class="max-h-60 overflow-y-auto space-y-1 font-mono text-xs pr-2"></div>
                         </div>
                     </div>
@@ -2826,6 +2880,9 @@
                             </div>
                         </form>
                         <div class="mt-8 pt-4 border-t border-gray-800">
+                            <input type="text" id="admin-properties-search" placeholder="Mülk ara..."
+                                class="w-full bg-black/60 border border-gray-700 text-gray-300 font-mono text-xs px-3 py-2 mb-2 focus:border-cyber-blue outline-none"
+                                oninput="Admin.filterPropertyList(this.value)">
                             <div id="admin-list-properties" class="max-h-60 overflow-y-auto space-y-1 font-mono text-xs pr-2"></div>
                         </div>
                     </div>
@@ -2855,6 +2912,9 @@
                             </div>
                         </form>
                         <div class="mt-8 pt-4 border-t border-gray-800">
+                            <input type="text" id="admin-equipments-search" placeholder="Ekipman ara..."
+                                class="w-full bg-black/60 border border-gray-700 text-gray-300 font-mono text-xs px-3 py-2 mb-2 focus:border-cyber-blue outline-none"
+                                oninput="Admin.filterEquipmentList(this.value)">
                             <div id="admin-list-equipments" class="max-h-60 overflow-y-auto space-y-1 font-mono text-xs pr-2"></div>
                         </div>
                     </div>
@@ -2928,6 +2988,9 @@
                             </div>
                         </form>
                         <div class="mt-8 pt-4 border-t border-gray-800">
+                            <input type="text" id="admin-contracts-search" placeholder="Kontrat ara..."
+                                class="w-full bg-black/60 border border-gray-700 text-gray-300 font-mono text-xs px-3 py-2 mb-2 focus:border-cyber-blue outline-none"
+                                oninput="Admin.filterContractList(this.value)">
                             <div id="admin-list-contracts" class="max-h-60 overflow-y-auto space-y-1 font-mono text-xs pr-2"></div>
                         </div>
                     </div>
@@ -2999,6 +3062,9 @@
                             </div>
                         </form>
                         <div class="mt-8 pt-4 border-t border-gray-800">
+                            <input type="text" id="admin-cases-search" placeholder="Dava ara..."
+                                class="w-full bg-black/60 border border-gray-700 text-gray-300 font-mono text-xs px-3 py-2 mb-2 focus:border-cyber-blue outline-none"
+                                oninput="Admin.filterCaseList(this.value)">
                             <div id="admin-list-cases" class="max-h-60 overflow-y-auto space-y-1 font-mono text-xs pr-2"></div>
                         </div>
                     </div>
@@ -3536,6 +3602,8 @@
      o.memberCount = o.memberCount ?? null;
      o.hierarchy   = o.hierarchy   ?? '';
      o.threatLevel = o.threatLevel ?? 'Low';
+     if(!o.members) o.members = [];
+     o.members.forEach(m => { if(!m.role) m.role = ''; });
      o.heatLevel   = o.heatLevel   ?? 'Clean';
      o.linkedProperties = o.linkedProperties ?? [];
      o.linkedVehicles   = o.linkedVehicles   ?? [];
@@ -3607,7 +3675,8 @@
      if(remote && remote.data && Object.keys(remote.data).length > 0) {
       const parsed = this.migrateDB(remote.data);
       localStorage.setItem(this.KEY, JSON.stringify(parsed));
-      SupaSync._lastRemoteHash = JSON.stringify(remote.data).length + '_' + remote.updatedAt;
+      SupaSync._lastRemoteHash = remote.updatedAt || '';
+      SupaSync._lastSavedAt = remote.updatedAt || new Date().toISOString();
       return parsed;
      }
     } catch(e) {
@@ -5891,6 +5960,8 @@
    },
 
    loadOrgs() {
+    const mSel = document.getElementById('o-member-char');
+    if(mSel) mSel.innerHTML = '<option value="">Karakter seç...</option>' + getSortedChars().map(c=>`<option value="${c.id}">${c.name}${c.alias?' / '+c.alias:''}</option>`).join('');
     const list = document.getElementById('admin-list-orgs');
     if(list) {
      list.innerHTML = DB.organizations.map(o => `
@@ -5907,7 +5978,8 @@
     document.getElementById('o-name').value = o.name;
     document.getElementById('o-color').value=o.color||'#00a2ff';
  const _ot=document.getElementById('o-threat'); if(_ot) _ot.value=o.threatLevel||'Low';
- const _oh=document.getElementById('o-heat'); if(_oh) _oh.value=o.heatLevel||'Clean';
+     const _ml=document.getElementById('o-member-list'); if(_ml){_ml.innerHTML='';(o.members||[]).forEach(m=>Admin.addOrgMemberUI(m));}
+     const _oh=document.getElementById('o-heat'); if(_oh) _oh.value=o.heatLevel||'Clean';
  const _ocp=document.getElementById('o-color-pick'); if(_ocp)_ocp.value=o.color||'#00a2ff'; 
     document.getElementById('o-terr').value = o.territories ? o.territories.join(', ') : '';
     document.getElementById('o-img').value = o.image || ''; 
@@ -5959,6 +6031,7 @@
 
      banner: document.getElementById('o-banner') ? document.getElementById('o-banner').value : (existing && existing.banner || ''),
      status:      document.getElementById('o-status')?.value || (existing?.status || 'Active'),
+     members: Array.from(document.querySelectorAll('#o-member-list .org-member-item')).map(el=>({charId:el.dataset.charid,role:el.dataset.role||''})),
      threatLevel: document.getElementById('o-threat')?.value || (existing?.threatLevel || 'Low'),
      heatLevel:   document.getElementById('o-heat')?.value   || (existing?.heatLevel   || 'Clean'),
      memberCount: membersVal !== '' ? parseInt(membersVal) : null,
@@ -6539,6 +6612,9 @@
      const cRepNotes = document.getElementById('c-rep-notes'); if(cRepNotes) cRepNotes.value = '';
      this.updateRepSlider(document.getElementById('c-rep-global') || {value:'0'});
     }
+    if(prefix === 'org') {
+     const oml = document.getElementById('o-member-list'); if(oml) oml.innerHTML = '';
+    }
     if(prefix === 'case') {
      const tl = document.getElementById('case-tag-list'); if(tl) tl.innerHTML = '';
      const al = document.getElementById('case-agent-list'); if(al) al.innerHTML = '';
@@ -6763,6 +6839,29 @@
     Storage.save(DB); this.loadChars(); UI.renderAll();
    },
 
+            addOrgMember() {
+                const sel=document.getElementById('o-member-char');
+                const roleEl=document.getElementById('o-member-role');
+                if(!sel||!sel.value) return;
+                const cid=sel.value; const role=(roleEl?.value||'').trim();
+                if(document.querySelector('#o-member-list .org-member-item[data-charid="'+cid+'"]')) return;
+                this.addOrgMemberUI({charId:cid, role});
+                sel.value=''; if(roleEl) roleEl.value='';
+            },
+            addOrgMemberUI(m) {
+                const c=DB.characters.find(x=>x.id===m.charId); if(!c) return;
+                const d=document.createElement('div');
+                d.className='flex items-center gap-2 p-2 bg-black/40 border border-gray-800 org-member-item';
+                d.dataset.charid=m.charId; d.dataset.role=m.role||'';
+                d.innerHTML='<img src="'+(c.image||'https://ui-avatars.com/api/?name='+encodeURIComponent(c.name)+'&background=000&color=fff&size=32')+'" class="w-7 h-7 rounded-full object-cover flex-shrink-0"><span class="font-mono text-xs text-white flex-1">'+c.name+'</span>'+(m.role?'<span class="font-mono text-[10px] border px-1.5 py-0.5" style="color:var(--neon-blue);border-color:rgba(0,162,255,.3)">'+m.role+'</span>':'')+'<button type="button" class="text-gray-600 hover:text-cyber-red click-sfx ml-auto" onclick="this.parentElement.remove()"><i class="fas fa-times text-xs"></i></button>';
+                const list=document.getElementById('o-member-list'); if(list) list.appendChild(d);
+            },
+            filterOrgList(q){const r=(q||'').toLowerCase().trim();document.querySelectorAll('#admin-list-orgs > div').forEach(i=>{i.style.display=(!r||i.textContent.toLowerCase().includes(r))?'':'none';});},
+            filterVehicleList(q){const r=(q||'').toLowerCase().trim();document.querySelectorAll('#admin-list-vehicles > div').forEach(i=>{i.style.display=(!r||i.textContent.toLowerCase().includes(r))?'':'none';});},
+            filterPropertyList(q){const r=(q||'').toLowerCase().trim();document.querySelectorAll('#admin-list-properties > div').forEach(i=>{i.style.display=(!r||i.textContent.toLowerCase().includes(r))?'':'none';});},
+            filterEquipmentList(q){const r=(q||'').toLowerCase().trim();document.querySelectorAll('#admin-list-equipments > div').forEach(i=>{i.style.display=(!r||i.textContent.toLowerCase().includes(r))?'':'none';});},
+            filterContractList(q){const r=(q||'').toLowerCase().trim();document.querySelectorAll('#admin-list-contracts > div').forEach(i=>{i.style.display=(!r||i.textContent.toLowerCase().includes(r))?'':'none';});},
+            filterCaseList(q){const r=(q||'').toLowerCase().trim();document.querySelectorAll('#admin-list-cases > div').forEach(i=>{i.style.display=(!r||i.textContent.toLowerCase().includes(r))?'':'none';});},
    filterCharList(q){
     const r=(q||'').toLowerCase().trim();
     document.querySelectorAll('#admin-list-chars > div').forEach(i=>{i.style.display=(!r||i.textContent.toLowerCase().includes(r))?'':'none';});
@@ -7107,7 +7206,7 @@
     <!-- Mobil Alt Tab Bar -->
     <div id="mobile-tabbar">
      <button onclick="UI.switchTab('dashboard')" data-mtab="dashboard"><i class="fas fa-th-large"></i><span>PANEL</span></button>
-     <button onclick="UI.switchTab('characters')" data-mtab="characters"><i class="fas fa-user-secret"></i><span>PROFİL</span></button>
+     <button onclick="UI.switchTab('chars')" data-mtab="chars"><i class="fas fa-user-secret"></i><span>PROFİL</span></button>
      <button onclick="UI.switchTab('contracts')" data-mtab="contracts"><i class="fas fa-crosshairs"></i><span>KONTRAT</span></button>
      <button onclick="UI.switchTab('radar')" data-mtab="radar"><i class="fas fa-map"></i><span>HARİTA</span></button>
      <button onclick="UI.switchTab('cases')" data-mtab="cases"><i class="fas fa-folder-open"></i><span>DAVA</span></button>
