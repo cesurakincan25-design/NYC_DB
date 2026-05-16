@@ -151,6 +151,10 @@ body.is-mobile #radar-container { height: calc(100vh - 120px); }
 /* Tab bar aktif renk */
 #mobile-tabbar button.active { color: var(--neon-blue); border-top: 2px solid var(--neon-blue); }
 #mobile-tabbar button { border-top: 2px solid transparent; transition: color .15s, border-color .15s; }
+
+        #player-filters label { cursor: pointer; }
+        #player-filters input[type="radio"]:checked + span { font-weight: bold; }
+        .player-filter-btn.active + span { font-weight: bold; }
 </style>    <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     
@@ -379,6 +383,20 @@ body.is-mobile #radar-container { height: calc(100vh - 120px); }
                     <div class="text-[10px] text-gray-500 mb-2 tracking-widest" data-i18n="filter_org">FILTER.ORG</div>
                     <div id="org-filters" class="space-y-2 text-xs mb-4 border-b border-gray-800 pb-3"><label class="flex items-center gap-3 cursor-pointer text-gray-400 hover:text-white transition-colors py-1 group hover-sfx"><input type="radio" name="org" checked="" onclick="UI.filterOrg('all')" class="cyber-radio click-sfx"><span class="tracking-widest uppercase text-[10px] mt-0.5">ALL RECORDS</span></label><label class="flex items-center gap-3 cursor-pointer hover:text-white transition-colors py-1 group hover-sfx" style="color:#00a2ff"><input type="radio" name="org" onclick="UI.filterOrg('org_devitt')" class="cyber-radio click-sfx" style="--neon-blue: #00a2ff"><span class="tracking-widest uppercase text-[10px] mt-0.5 truncate opacity-80 group-hover:opacity-100">Devitt Industries</span></label><label class="flex items-center gap-3 cursor-pointer hover:text-white transition-colors py-1 group hover-sfx" style="color:#9333ea"><input type="radio" name="org" onclick="UI.filterOrg('org_providence')" class="cyber-radio click-sfx" style="--neon-blue: #9333ea"><span class="tracking-widest uppercase text-[10px] mt-0.5 truncate opacity-80 group-hover:opacity-100">Providence</span></label><label class="flex items-center gap-3 cursor-pointer hover:text-white transition-colors py-1 group hover-sfx" style="color:#eab308"><input type="radio" name="org" onclick="UI.filterOrg('org_konsey')" class="cyber-radio click-sfx" style="--neon-blue: #eab308"><span class="tracking-widest uppercase text-[10px] mt-0.5 truncate opacity-80 group-hover:opacity-100">Konsey</span></label><label class="flex items-center gap-3 cursor-pointer hover:text-white transition-colors py-1 group hover-sfx" style="color:#dc2626"><input type="radio" name="org" onclick="UI.filterOrg('org_karaguller')" class="cyber-radio click-sfx" style="--neon-blue: #dc2626"><span class="tracking-widest uppercase text-[10px] mt-0.5 truncate opacity-80 group-hover:opacity-100">Karagüller</span></label><label class="flex items-center gap-3 cursor-pointer hover:text-white transition-colors py-1 group hover-sfx" style="color:#0284c7"><input type="radio" name="org" onclick="UI.filterOrg('org_arasaka')" class="cyber-radio click-sfx" style="--neon-blue: #0284c7"><span class="tracking-widest uppercase text-[10px] mt-0.5 truncate opacity-80 group-hover:opacity-100">Arasaka Corporation</span></label><label class="flex items-center gap-3 cursor-pointer hover:text-white transition-colors py-1 group hover-sfx" style="color:#f97316"><input type="radio" name="org" onclick="UI.filterOrg('org_74st')" class="cyber-radio click-sfx" style="--neon-blue: #f97316"><span class="tracking-widest uppercase text-[10px] mt-0.5 truncate opacity-80 group-hover:opacity-100">74St. CLIQ</span></label><label class="flex items-center gap-3 cursor-pointer hover:text-white transition-colors py-1 group hover-sfx" style="color:#3b82f6"><input type="radio" name="org" onclick="UI.filterOrg('org_nypd')" class="cyber-radio click-sfx" style="--neon-blue: #3b82f6"><span class="tracking-widest uppercase text-[10px] mt-0.5 truncate opacity-80 group-hover:opacity-100">NYPD / Federal</span></label><label class="flex items-center gap-3 cursor-pointer hover:text-white transition-colors py-1 group hover-sfx" style="color:#ef4444"><input type="radio" name="org" onclick="UI.filterOrg('org_raven')" class="cyber-radio click-sfx" style="--neon-blue: #ef4444"><span class="tracking-widest uppercase text-[10px] mt-0.5 truncate opacity-80 group-hover:opacity-100">Raven Academy</span></label></div>
 
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-[10px] text-gray-500 tracking-widest">FILTER.PLAYER</span>
+                        <span id="player-filter-indicator" class="font-mono text-[9px] font-bold hidden" style="display:none"></span>
+                    </div>
+                    <div id="player-filters" class="space-y-1.5 text-xs mb-4 border-b border-gray-800 pb-3">
+                        <label class="flex items-center gap-3 cursor-pointer text-gray-400 hover:text-white transition-colors py-1 group hover-sfx">
+                            <input type="radio" name="player" checked onclick="UI.filterPlayer('all')" class="cyber-radio click-sfx">
+                            <span class="tracking-widest uppercase text-[10px] mt-0.5">TÜMÜ</span>
+                        </label>
+                        <label class="flex items-center gap-3 cursor-pointer hover:text-white transition-colors py-1 group hover-sfx">
+                            <input type="radio" name="player" onclick="UI.filterPlayer('npc')" class="cyber-radio click-sfx">
+                            <span class="tracking-widest uppercase text-[10px] mt-0.5 text-gray-500">NPC</span>
+                        </label>
+                    </div>
                     <div class="text-[10px] text-gray-500 mb-2 tracking-widest" data-i18n="filter_threat">FILTER.THREAT</div>
                     <div id="threat-filters" class="space-y-2 text-xs mb-4 border-b border-gray-800 pb-3">
                         <label class="flex items-center gap-3 cursor-pointer text-gray-400 hover:text-white transition-colors group hover-sfx"><input type="radio" name="threat" checked="" onclick="UI.filterThreat('all')" class="cyber-radio click-sfx"><span class="tracking-widest uppercase text-[10px] mt-0.5" data-i18n="all_levels">ALL</span></label>
@@ -410,6 +428,7 @@ body.is-mobile #radar-container { height: calc(100vh - 120px); }
 
         <main class="flex-1 flex flex-col h-full relative z-10 overflow-hidden">
             <header class="h-16 glass-panel border-b border-cyber-blue/30 flex items-center justify-between px-6 flex-shrink-0">
+            <button onclick="UI.promptAdmin()" class="font-mono text-[9px] tracking-widest border px-2 py-1 mr-2 hover:opacity-80 transition-opacity click-sfx flex-shrink-0" id="player-indicator" style="color:#6b7280;border-color:#6b7280">—</button>
             <div id="sync-indicator" class="font-mono text-[9px] tracking-widest flex-shrink-0 mr-2" style="color:#00ff88"><i class="fas fa-cloud mr-1"></i>SYNCED</div>
             <button id="mobile-menu-btn" onclick="UI.toggleMobileMenu()" class="hidden mr-3 text-cyber-blue flex-shrink-0 click-sfx" style="display:none"><i class="fas fa-bars text-xl"></i></button>
                 <div class="flex items-center gap-4 w-2/3 max-w-xl">
@@ -2582,6 +2601,12 @@ body.is-mobile #radar-container { height: calc(100vh - 120px); }
                                 <input type="hidden" id="c-org">
                             </div>
                             
+                            <div>
+                                <label class="text-cyber-blue block mb-1">Oyuncu / Player</label>
+                                <select id="c-player">
+                                    <option value="">— NPC / Atanmamış —</option>
+                                </select>
+                            </div>
                             <div><label class="text-cyber-blue block mb-1">Status</label>
                                 <select id="c-status">
                                     <option value="Active">Active / Aktif</option><option value="Deceased">Deceased / Ölü</option>
@@ -2775,13 +2800,13 @@ body.is-mobile #radar-container { height: calc(100vh - 120px); }
                             <div class="md:col-span-2"><label class="text-cyber-blue block mb-1" data-i18n="org_desc">Description / Intel</label><textarea id="o-desc" rows="3"></textarea></div>
                             <div class="md:col-span-2"><label class="text-cyber-blue block mb-1">Notes / Intelligence</label><textarea id="o-notes" rows="2" placeholder="Classified notes, recent activity..."></textarea></div>
                            <div class="md:col-span-2 border-t border-gray-800 pt-4 mt-2">
-                                <label class="text-cyber-blue block mb-2 text-xs tracking-widest uppercase">Üyeler / Roller</label>
-                                <div class="flex gap-2 mb-2 flex-wrap">
-                                    <select id="o-member-char" class="flex-1 min-w-[150px]"></select>
-                                    <input type="text" id="o-member-role" placeholder="Rütbe/Rol (örn: Lider, Enforcer...)" class="flex-1 min-w-[150px]">
-                                    <button type="button" onclick="Admin.addOrgMember()" class="cyber-button click-sfx px-4 text-xs">+ EKLE</button>
+                                <label class="text-cyber-blue block mb-2 text-xs tracking-widest uppercase">
+                                    <i class="fas fa-users mr-2"></i>Üyeler &amp; Roller
+                                    <span class="text-gray-500 text-[9px] ml-2">(Karakterler kendi edit sayfasından eklenir)</span>
+                                </label>
+                                <div id="o-member-list" class="space-y-2 max-h-52 overflow-y-auto">
+                                    <p class="font-mono text-[10px] text-gray-600 text-center py-4">Organizasyon seçildiğinde üyeler yüklenecek...</p>
                                 </div>
-                                <div id="o-member-list" class="space-y-1 max-h-40 overflow-y-auto"></div>
                             </div>
                  <div class="md:col-span-2"><label class="text-cyber-blue block mb-1">External Links (comma-separated URLs)</label><input type="text" id="o-links" placeholder="https://discord.com/..."></div>
                             <div>
@@ -2801,6 +2826,7 @@ body.is-mobile #radar-container { height: calc(100vh - 120px); }
                             <input type="text" id="admin-orgs-search" placeholder="Organizasyon ara..."
                                 class="w-full bg-black/60 border border-gray-700 text-gray-300 font-mono text-xs px-3 py-2 mb-2 focus:border-cyber-blue outline-none"
                                 oninput="Admin.filterOrgList(this.value)">
+                            <div id="admin-org-members" class="max-h-52 overflow-y-auto mb-3" style="display:none"></div>
                             <div id="admin-list-orgs" class="max-h-60 overflow-y-auto space-y-1 font-mono text-xs pr-2"></div>
                         </div>
                     </div>
@@ -2816,7 +2842,15 @@ body.is-mobile #radar-container { height: calc(100vh - 120px); }
                         </div>
                         <form id="veh-form" onsubmit="Admin.saveVehicle(event); return false;" class="grid grid-cols-1 md:grid-cols-2 gap-4 font-mono text-xs">
                             <input type="hidden" id="v-id">
-                            <div><label class="text-cyber-blue block mb-1">Make &amp; Model</label><input type="text" id="v-model" required="" placeholder="e.g. Quadra Type-66"></div>
+                            <div><label class="text-cyber-blue block mb-1">Marka / Brand</label><input type="text" id="v-brand" placeholder="Ferrari, BMW..."></div>
+                            <div><label class="text-cyber-blue block mb-1">Model</label><input type="text" id="v-model" required="" placeholder="SF90, M3..."></div>
+                            <div><label class="text-cyber-blue block mb-1">Üretim Yılı</label><input type="text" id="v-year" placeholder="2024"></div>
+                            <div><label class="text-cyber-blue block mb-1">Renk</label><input type="text" id="v-color-name" placeholder="Kırmızı, Midnight Black..."></div>
+                            <div><label class="text-cyber-blue block mb-1">Güç (HP)</label><input type="text" id="v-hp" placeholder="500 HP"></div>
+                            <div><label class="text-cyber-blue block mb-1">0-100 km/h (sn)</label><input type="text" id="v-acc" placeholder="3.5"></div>
+                            <div><label class="text-cyber-blue block mb-1">Maks Hız (km/h)</label><input type="text" id="v-topspeed" placeholder="320"></div>
+                            <div><label class="text-cyber-blue block mb-1">Maks Hız (mph)</label><input type="text" id="v-topspeed-mph" placeholder="200" oninput="const k=document.getElementById('v-topspeed');if(k&&this.value)k.value=Math.round(this.value*1.609)+'';"></div>
+                            <div><label class="text-cyber-blue block mb-1">Fiyat / Price</label><input type="text" id="v-price" placeholder="$300,000"></div>
                             <div><label class="text-cyber-blue block mb-1">License Plate</label><input type="text" id="v-plate" placeholder="e.g. 99H4X"></div>
                             <div><label class="text-cyber-blue block mb-1">Performance Specs</label><input type="text" id="v-perf" placeholder="e.g. 1000 HP / V8"></div>
                             <div><label class="text-cyber-blue block mb-1">Registered Owner</label><select id="v-owner"></select></div>
@@ -3276,7 +3310,11 @@ body.is-mobile #radar-container { height: calc(100vh - 120px); }
                 </div>
                 <div class="space-y-6 flex-1">
                     <div><span class="text-gray-600 block text-xs mb-1" data-i18n="plate">PLATE</span><div id="v-modal-plate" class="text-xl text-white tracking-[0.2em] bg-black/50 p-3 border border-gray-800 inline-block"></div></div>
-                    <div><span class="text-gray-600 block text-xs mb-1" data-i18n="specs">SPECS</span><p id="v-modal-perf" class="text-gray-300 text-sm leading-relaxed"></p></div>
+                    <div class="space-y-2 font-mono text-xs">
+                    <span class="text-gray-600 block text-[10px] tracking-widest mb-2">SPECS</span>
+                    <div id="v-modal-specs-grid" class="space-y-1.5 text-gray-300"></div>
+                    <p id="v-modal-perf" class="text-gray-400 text-xs mt-1"></p>
+                    </div>
                     <div><span class="text-gray-600 block text-xs mb-1" data-i18n="owner">OWNER</span><div id="v-modal-owner" class="text-lg"></div></div>
                 </div>
                 <div class="z-10 mt-6 pt-4 border-t border-gray-800 flex justify-end">
@@ -3338,16 +3376,19 @@ body.is-mobile #radar-container { height: calc(100vh - 120px); }
     </div>
 
     <div id="admin-login-modal" class="fixed inset-0 bg-black/95 z-[150] flex items-center justify-center p-4 backdrop-blur-md hidden">
-        <div class="glass-panel p-10 border border-cyber-red max-w-sm w-full text-center relative overflow-hidden">
-            <div class="absolute inset-0 bg-cyber-red/5 animate-pulse pointer-events-none"></div>
-            <i class="fas fa-shield-alt text-5xl text-cyber-red mb-6"></i>
-            <h2 class="font-display text-2xl text-white mb-2 tracking-widest">RESTRICTED</h2>
-            <p class="font-mono text-xs text-gray-500 mb-6">Enter operator callsign and override key.</p>
-            <input type="text" id="admin-username" class="w-full text-center mb-3 tracking-[0.3em] text-cyber-blue border-cyber-blue focus:shadow-[0_0_15px_rgba(0,162,255,0.4)]" placeholder="CALLSIGN" autocomplete="off" onkeydown="if(event.key==='Enter') document.getElementById('admin-pw').focus()">
-            <input type="password" id="admin-pw" class="w-full text-center mb-6 tracking-[0.5em] text-cyber-red border-cyber-red focus:shadow-[0_0_15px_rgba(255,42,42,0.4)]" placeholder="******" onkeydown="if(event.key==='Enter') Admin.login()">
+        <div class="glass-panel p-8 border border-cyber-blue max-w-md w-full text-center relative overflow-hidden">
+            <div class="absolute inset-0 bg-cyber-blue/3 pointer-events-none"></div>
+            <div class="font-display text-3xl text-cyber-red tracking-widest glitch mb-1" data-text="N.Y.C.">N.Y.C.</div>
+            <p class="font-mono text-[10px] text-gray-500 mb-6 tracking-[0.3em]">OPERATOR IDENTIFICATION — NYC_DB / NYC_RP</p>
+            <div id="player-select-grid" class="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-6">
+            </div>
+            <div id="login-selected-info" class="hidden mb-4 p-3 border border-cyber-blue/30 font-mono text-xs">
+                <span class="text-gray-500">SEÇİLEN:</span>
+                <span id="login-selected-name" class="text-cyber-blue ml-2 font-bold tracking-widest"></span>
+            </div>
             <div class="flex gap-3">
-                <button onclick="document.getElementById('admin-login-modal').classList.add('hidden')" class="cyber-button w-1/2 py-3 text-xs click-sfx hover-sfx">CANCEL</button>
-                <button onclick="Admin.login()" class="cyber-button danger w-1/2 py-3 text-xs click-sfx hover-sfx">OVERRIDE</button>
+                <button onclick="document.getElementById('admin-login-modal').classList.add('hidden')" class="cyber-button w-1/2 py-3 text-xs click-sfx hover-sfx">İPTAL</button>
+                <button id="login-confirm-btn" onclick="Admin.login()" class="cyber-button w-1/2 py-3 text-xs click-sfx hover-sfx" style="border-color:var(--neon-blue);color:var(--neon-blue)" disabled>GİRİŞ YAP</button>
             </div>
         </div>
     </div>
@@ -3487,6 +3528,7 @@ body.is-mobile #radar-container { height: calc(100vh - 120px); }
      org: new Set(['all']),
      threat: new Set(['all']),
      heat: new Set(['all']),
+     player: 'all',
      search: ''
     };
   let currentLang = 'tr';
@@ -3494,6 +3536,38 @@ body.is-mobile #radar-container { height: calc(100vh - 120px); }
 
   
 
+  const NYC_PLAYERS=[
+    {id:"eren",name:"Eren",role:"admin",color:"#00a2ff"},
+    {id:"melih",name:"Melih",role:"admin",color:"#ff2a2a"},
+    {id:"tuna",name:"Tuna",role:"admin",color:"#00ff66"},
+    {id:"nes",name:"Nes",role:"admin",color:"#a855f7"},
+    {id:"aley",name:"Aley",role:"admin",color:"#f59e0b"}
+  ];
+  window.NYC_PLAYERS=NYC_PLAYERS;
+  (function(){const s=localStorage.getItem('nyc_active_player');if(s){try{const p=JSON.parse(s);window.currentOperator=p.name;window.currentPlayer=p;}catch(e){}}})();
+  function renderPlayerSelectGrid(){
+    const grid=document.getElementById('player-select-grid');if(!grid)return;
+    grid.innerHTML=NYC_PLAYERS.map(p=>`<button class="player-select-btn glass-panel p-4 border-2 border-transparent cursor-pointer click-sfx flex flex-col items-center gap-2 transition-all" style="color:${p.color}" data-player-id="${p.id}" onclick="selectPlayer('${p.id}')"><div class="w-12 h-12 rounded-full border-2 flex items-center justify-center font-display font-black text-xl" style="border-color:${p.color};background:${p.color}18">${p.name[0]}</div><span class="font-mono text-xs tracking-widest">${p.name.toUpperCase()}</span></button>`).join('');
+    if(window.currentPlayer){document.querySelectorAll('.player-select-btn').forEach(b=>{if(b.dataset.playerId===window.currentPlayer.id){b.style.borderColor=window.currentPlayer.color;b.style.background=window.currentPlayer.color+'18';}});showLoginSelection(window.currentPlayer);}
+  }
+  function selectPlayer(id){
+    const p=NYC_PLAYERS.find(x=>x.id===id);if(!p)return;
+    window._selectedPlayer=p;
+    document.querySelectorAll('.player-select-btn').forEach(b=>{b.style.borderColor=b.dataset.playerId===id?p.color:'transparent';b.style.background=b.dataset.playerId===id?p.color+'22':'';});
+    showLoginSelection(p);
+  }
+  function showLoginSelection(p){
+    const info=document.getElementById('login-selected-info');const name=document.getElementById('login-selected-name');const btn=document.getElementById('login-confirm-btn');
+    if(info)info.classList.remove('hidden');
+    if(name){name.textContent=p.name.toUpperCase();name.style.color=p.color;}
+    if(btn){btn.removeAttribute('disabled');btn.style.borderColor=p.color;btn.style.color=p.color;}
+  }
+  function updatePlayerIndicator(){
+    const el=document.getElementById('player-indicator');if(!el)return;
+    const p=window.currentPlayer;
+    if(p){el.textContent=p.name.toUpperCase();el.style.color=p.color;el.style.borderColor=p.color+'50';}
+    else{el.textContent='GİRİŞ';el.style.color='#6b7280';el.style.borderColor='#374151';}
+  }
   window.currentOperator = 'SYSTEM';
   function showSaveToast(msg,isError){
    try{
@@ -3558,6 +3632,8 @@ body.is-mobile #radar-container { height: calc(100vh - 120px); }
      }
      if(c.statusNote === undefined) c.statusNote = '';
      if(!c.bankAccounts) c.bankAccounts = [];
+     if(c.playerId === undefined) c.playerId = '';
+     if(c.player === undefined) c.player = '';
      
 
      if(c.reputation === undefined) {
@@ -3576,6 +3652,13 @@ body.is-mobile #radar-container { height: calc(100vh - 120px); }
 
     
 
+    if(!parsed.organizations) parsed.organizations = [];
+    (parsed.organizations).forEach(o => {
+     if(!o.memberRoles) o.memberRoles = {};
+     if(!o.members)     o.members     = [];
+     if(!o.threatLevel) o.threatLevel = 'Low';
+     if(!o.heatLevel)   o.heatLevel   = 'Clean';
+    });
     if(!parsed.vehicles) parsed.vehicles = [];
     parsed.vehicles.forEach(v => {
      if(!v.heatLevel) v.heatLevel = 'Clean';
@@ -3603,6 +3686,7 @@ body.is-mobile #radar-container { height: calc(100vh - 120px); }
      o.hierarchy   = o.hierarchy   ?? '';
      o.threatLevel = o.threatLevel ?? 'Low';
      if(!o.members) o.members = [];
+     if(!o.memberRoles) o.memberRoles = {};
      o.members.forEach(m => { if(!m.role) m.role = ''; });
      o.heatLevel   = o.heatLevel   ?? 'Clean';
      o.linkedProperties = o.linkedProperties ?? [];
@@ -4045,6 +4129,7 @@ body.is-mobile #radar-container { height: calc(100vh - 120px); }
     // Eski arama panellerini temizle
     ['gsr-panel','global-search-panel','srp'].forEach(id => { const el=document.getElementById(id); if(el)el.remove(); });
     try { SupaSync.startPolling(30000); } catch(e) {}
+    try { updatePlayerIndicator(); } catch(e) {}
 
     const savedTheme = localStorage.getItem('nyc_theme') || '';
     if(savedTheme) UI.applyTheme(savedTheme);
@@ -4064,8 +4149,18 @@ body.is-mobile #radar-container { height: calc(100vh - 120px); }
      }
     });
     document.getElementById('search-input').addEventListener('input', e => {
-     activeFilters.search = e.target.value.toLowerCase();
-     try{UI.renderGlobalSearchResults(activeFilters.search);}catch(e){}
+     const _sv = e.target.value;
+     // "oyuncu:" prefix kontrolü: "eren:" → player filter
+     const _pm = _sv.match(/^(eren|melih|tuna|nes|aley):/i);
+     if(_pm) {
+      activeFilters.player = _pm[1].toLowerCase();
+      activeFilters.search = _sv.slice(_pm[0].length).toLowerCase().trim();
+      // Sidebar player butonunu aktif yap
+      document.querySelectorAll('.player-filter-btn').forEach(b=>b.classList.toggle('active',b.dataset.player===activeFilters.player));
+     } else {
+      activeFilters.search = _sv.toLowerCase();
+      try{UI.renderGlobalSearchResults(activeFilters.search);}catch(e){}
+     }
      this.renderCharacters();
      this.renderVehicles();
      this.renderProperties();
@@ -4434,6 +4529,27 @@ body.is-mobile #radar-container { height: calc(100vh - 120px); }
     this.renderFilters();
    },
 
+   filterPlayer(pid) {
+    activeFilters.player = pid || 'all';
+    const si = document.getElementById('search-input');
+    if(si && (window.NYC_PLAYERS||[]).some(p=>si.value.toLowerCase().startsWith(p.id+':'))) {
+     si.value = ''; activeFilters.search = '';
+    }
+    document.querySelectorAll('.player-filter-btn').forEach(b=>{
+     b.classList.toggle('active', b.dataset.player===activeFilters.player);
+    });
+    // Aktif gösterge
+    const pInd = document.getElementById('player-filter-indicator');
+    if(pInd) {
+     if(activeFilters.player !== 'all') {
+      const pl=(window.NYC_PLAYERS||[]).find(p=>p.id===activeFilters.player);
+      pInd.textContent = pl?pl.name.toUpperCase():'NPC';
+      pInd.style.color = pl?pl.color:'#6b7280';
+      pInd.style.display='inline';
+     } else { pInd.style.display='none'; }
+    }
+    this.renderCharacters();
+   },
    toggleMobileMenu() {
     const overlay=document.getElementById('mobile-sidebar-overlay');
     const panel=document.getElementById('mobile-sidebar-panel');
@@ -4467,6 +4583,18 @@ body.is-mobile #radar-container { height: calc(100vh - 120px); }
    },
 
    renderFilters() {
+    // Player filter butonlarını renderla
+    const _pf = document.getElementById('player-filters');
+    if(_pf && window.NYC_PLAYERS) {
+     const _npcLabel = _pf.querySelector('label:last-child');
+     _pf.querySelectorAll('.player-filter-btn-wrap').forEach(el=>el.remove());
+     window.NYC_PLAYERS.forEach(p => {
+      const wrap = document.createElement('label');
+      wrap.className='player-filter-btn-wrap flex items-center gap-3 cursor-pointer hover:text-white transition-colors py-1 group hover-sfx';
+      wrap.innerHTML=`<input type="radio" name="player" ${activeFilters.player===p.id?'checked':''} onclick="UI.filterPlayer('${p.id}')" class="cyber-radio click-sfx player-filter-btn" data-player="${p.id}"><span class="tracking-widest uppercase text-[10px] mt-0.5" style="color:${p.color}">${p.name}</span>`;
+      _pf.insertBefore(wrap, _npcLabel);
+     });
+    }
     const dict = i18n[currentLang];
     const cont = document.getElementById('org-filters');
     if(!cont) return;
@@ -4529,6 +4657,8 @@ body.is-mobile #radar-container { height: calc(100vh - 120px); }
      if (!activeFilters.org.has('all') && !charOrgs.some(oid => activeFilters.org.has(oid))) return;
      if (!activeFilters.threat.has('all') && !activeFilters.threat.has(c.threatLevel)) return;
      if (!activeFilters.heat.has('all') && !activeFilters.heat.has(c.heatLevel)) return;
+     if (activeFilters.player === 'npc' && c.playerId) return;
+     if (activeFilters.player !== 'all' && activeFilters.player !== 'npc' && (c.playerId || '') !== activeFilters.player) return;
      
      const sName = c.name ? c.name.toLowerCase() : '';
      const sAlias = c.alias ? c.alias.toLowerCase() : '';
@@ -4572,6 +4702,7 @@ body.is-mobile #radar-container { height: calc(100vh - 120px); }
         ${isClassified ? `<div class="w-full h-full flex items-center justify-center ${imgFilter}"><i class="fas fa-user-secret text-6xl text-gray-700"></i></div>` : `<img src="${img}" class="w-full h-full object-cover object-top filter ${imgFilter} transition-all duration-500">`}
         <div class="absolute bottom-0 left-0 w-full p-2 bg-gradient-to-t from-black to-transparent flex justify-between items-end">
          <div class="flex flex-wrap gap-1">
+          ${(()=>{const _pl=(window.NYC_PLAYERS||[]).find(p=>p.id===c.playerId);return _pl?`<span class="inline-block font-mono text-[9px] px-1.5 py-0.5 border" style="color:${_pl.color};border-color:${_pl.color}50">${_pl.name}</span>`:''})()}
           ${isClassified
            ? `<div class="inline-block px-2 py-0.5 bg-black/80 font-mono text-[9px] border border-gray-700 uppercase tracking-widest text-gray-500">CLASSIFIED</div>`
            : charOrgsArr.slice(0,2).map(oid => {
@@ -4618,6 +4749,10 @@ body.is-mobile #radar-container { height: calc(100vh - 120px); }
     const visOrgs = DB.organizations.filter(o=>!osq||o.name.toLowerCase().includes(osq)||o.description?.toLowerCase().includes(osq)||(o.tags||[]).some(t=>t.toLowerCase().includes(osq)));
     grid.innerHTML = visOrgs.map(o => {
      const memberCount = DB.characters.filter(c=>(c.organizations||(c.organization?[c.organization]:[])).includes(o.id)).length;
+     const topMembers = DB.characters.filter(c=>(c.organizations||[]).includes(o.id)).slice(0,3).map(c=>{
+       const role = (o.members||[]).find(m=>m.charId===c.id)?.role||'';
+       return `<div class="flex items-center gap-1.5 font-mono text-[9px]"><span class="text-gray-400 truncate">${c.name}</span>${role?`<span style="color:${o.color};opacity:.8">${role}</span>`:''}</div>`;
+     }).join('');
      const status = o.status||'Active';
      const sColor = {Active:'text-cyber-green',Inactive:'text-yellow-400',Defunct:'text-gray-500',Shadow:'text-purple-400'}[status]||'text-gray-400';
      const tags = (o.tags||[]).map(t=>`<span class="bg-black/60 border px-2 py-0.5 text-[9px] font-mono uppercase tracking-widest" style="border-color:${o.color}40;color:${o.color}">${t}</span>`).join('');
@@ -5536,7 +5671,28 @@ body.is-mobile #radar-container { height: calc(100vh - 120px); }
      vModel.setAttribute('data-text', v.model);
     }
     const vPlate = document.getElementById('v-modal-plate'); if(vPlate) vPlate.innerText = v.plate || dict.unregistered;
-    const vPerf = document.getElementById('v-modal-perf'); if(vPerf) vPerf.innerText = v.perf || dict.classified;
+    const vPerf = document.getElementById('v-modal-perf'); if(vPerf) vPerf.innerText = v.perf || '';
+    // Specs grid
+    const _sg = document.getElementById('v-modal-specs-grid');
+    if(_sg) {
+     const _rows = [
+      v.brand && v.model ? ['<i class="fas fa-car mr-1"></i>ARAÇ', `${v.brand} ${v.model}`] : null,
+      v.year            ? ['ÜRETİM', v.year] : null,
+      v.color           ? ['RENK', v.color] : null,
+      v.hp              ? ['GÜÇ', `${v.hp} HP`] : null,
+      v.acc             ? ['0-100', `${v.acc} sn`] : null,
+      (v.topspeed||v.topSpeed) ? ['MAKS HIZ',
+        `${v.topspeed||v.topSpeed} km/h${v.topspeedMph?' / '+v.topspeedMph+' mph':''}`] : null,
+      v.price           ? ['FİYAT', v.price] : null,
+      v.plate           ? ['PLAKA', v.plate] : null,
+     ].filter(Boolean);
+     _sg.innerHTML = _rows.map(([k,val])=>
+      `<div class="flex justify-between gap-2">
+        <span class="text-gray-600 text-[10px] tracking-widest flex-shrink-0">${k}</span>
+        <span class="text-white text-right">${val}</span>
+       </div>`
+     ).join('');
+    }
 
     const heatEl = document.getElementById('v-modal-heat');
     if(heatEl) {
@@ -5666,20 +5822,26 @@ body.is-mobile #radar-container { height: calc(100vh - 120px); }
    promptAdmin() { 
     const loginModal = document.getElementById('admin-login-modal');
     if(!loginModal) return;
-    loginModal.classList.remove('hidden'); 
-    const pwInput = document.getElementById('admin-pw');
-    if(pwInput) {
-     pwInput.value = '';
-     pwInput.focus();
-    }
+    window._selectedPlayer = window.currentPlayer || null;
+    renderPlayerSelectGrid();
+    loginModal.classList.remove('hidden');
    }
   };
 
   const Admin = {
    exportDB() { Storage.export(DB); },
    login() {
+    const p = window._selectedPlayer;
+    if(!p) return;
+    window.currentPlayer   = p;
+    window.currentOperator = p.name;
+    localStorage.setItem('nyc_active_player', JSON.stringify(p));
     const loginModal = document.getElementById('admin-login-modal');
     if(loginModal) loginModal.classList.add('hidden');
+    updatePlayerIndicator();
+    // Admin paneli aç
+    UI.switchTab('admin');
+    
     
 
     const unameEl = document.getElementById('admin-username');
@@ -5731,6 +5893,13 @@ body.is-mobile #radar-container { height: calc(100vh - 120px); }
     if(tab === 'events') this.loadEvents();
    },
    loadChars() {
+    const pSel = document.getElementById('c-player');
+    if(pSel) {
+     pSel.innerHTML = '<option value="">— NPC / Atanmamış —</option>' +
+      (window.NYC_PLAYERS||[]).map(p=>`<option value="${p.id}">${p.name}</option>`).join('');
+    }
+    const pSel2=document.getElementById('c-player');
+    if(pSel2)pSel2.innerHTML='<option value="">— NPC —</option>'+(window.NYC_PLAYERS||[]).map(p=>`<option value="${p.id}">${p.name}</option>`).join('');
     
 
     const cOrgSel = document.getElementById('c-org-select');
@@ -5801,6 +5970,8 @@ body.is-mobile #radar-container { height: calc(100vh - 120px); }
     document.getElementById('c-story').value = c.story || '';
     const csNote = document.getElementById('c-status-note');
     if(csNote) csNote.value = c.statusNote || '';
+    const _cpSel = document.getElementById('c-player');
+    if(_cpSel) _cpSel.value = c.playerId || '';
     
     
 
@@ -5825,7 +5996,9 @@ body.is-mobile #radar-container { height: calc(100vh - 120px); }
 
      
 
-    const editBankList = document.getElementById('c-bank-list');
+    const _cpSel2=document.getElementById('c-player');
+                if(_cpSel2&&window.NYC_PLAYERS){_cpSel2.innerHTML='<option value="">— NPC —</option>'+window.NYC_PLAYERS.map(p=>`<option value="${p.id}">${p.name}</option>`).join('');_cpSel2.value=c.playerId||'';}
+                const editBankList = document.getElementById('c-bank-list');
     if(editBankList) { editBankList.innerHTML=''; (c.bankAccounts||[]).forEach(acc=>Admin.addBankAccountUI(acc)); }
 
   
@@ -5923,9 +6096,11 @@ body.is-mobile #radar-container { height: calc(100vh - 120px); }
      image: document.getElementById('c-img').value, 
      link: document.getElementById('c-link').value, 
      story: document.getElementById('c-story').value,
+     playerId:   document.getElementById('c-player')?.value || '',
      statusNote: document.getElementById('c-status-note')?.value?.trim() || '',
      relationships: relationships,
-     bankAccounts: Array.from(document.querySelectorAll('#c-bank-list .bank-item')).map(el=>({
+     player: (document.getElementById('c-player')||{}).value||'',
+                    bankAccounts: Array.from(document.querySelectorAll('#c-bank-list .bank-item')).map(el=>({
       bank:el.dataset.bank||'',account:el.dataset.account||'',balance:el.dataset.balance||'',note:el.dataset.note||''
      })),
      bankAccounts: Array.from(document.querySelectorAll('#c-bank-list .bank-item')).map(el=>({
@@ -5960,8 +6135,6 @@ body.is-mobile #radar-container { height: calc(100vh - 120px); }
    },
 
    loadOrgs() {
-    const mSel = document.getElementById('o-member-char');
-    if(mSel) mSel.innerHTML = '<option value="">Karakter seç...</option>' + getSortedChars().map(c=>`<option value="${c.id}">${c.name}${c.alias?' / '+c.alias:''}</option>`).join('');
     const list = document.getElementById('admin-list-orgs');
     if(list) {
      list.innerHTML = DB.organizations.map(o => `
@@ -5974,11 +6147,42 @@ body.is-mobile #radar-container { height: calc(100vh - 120px); }
    editOrg(id) {
     const o = DB.organizations.find(x => x.id === id);
     if(!o) return;
-    document.getElementById('o-id').value = o.id; 
+    document.getElementById('o-id').value = o.id;
+    const _omDiv = document.getElementById('admin-org-members');
+    if(_omDiv) _omDiv.style.display = 'block'; 
     document.getElementById('o-name').value = o.name;
     document.getElementById('o-color').value=o.color||'#00a2ff';
  const _ot=document.getElementById('o-threat'); if(_ot) _ot.value=o.threatLevel||'Low';
-     const _ml=document.getElementById('o-member-list'); if(_ml){_ml.innerHTML='';(o.members||[]).forEach(m=>Admin.addOrgMemberUI(m));}
+     // Üyeleri DB.characters'dan çek (bu org'a kayıtlı olanlar)
+     // Org üyeleri: DB.characters'dan bu org'a kayıtlı olanları getir
+     const _orgId = o.id;
+     const _orgMembers = DB.characters.filter(c=>(c.organizations||[c.organization]).includes(_orgId));
+     // Rol verisi o.memberRoles'dan gelir: {charId: role}
+     const _mRoles = o.memberRoles || {};
+     // editOrg'da admin-org-members bölümünü doldur
+     const _omList = document.getElementById('admin-org-members');
+     if(_omList) {
+      if(_orgMembers.length === 0) {
+       _omList.innerHTML = `<p class="font-mono text-[10px] text-gray-600 text-center py-4">Bu organizasyonda henüz üye yok.<br><span class="text-[9px]">Karakterin org listesine bu org'u ekleyin.</span></p>`;
+      } else {
+       _omList.innerHTML = _orgMembers.map(c => {
+        const img = c.image||`https://ui-avatars.com/api/?name=${encodeURIComponent(c.name)}&background=000&color=fff&size=32`;
+        const role = _mRoles[c.id] || '';
+        const pl = (window.NYC_PLAYERS||[]).find(p=>p.id===c.playerId);
+        return `<div class="flex items-center gap-3 p-2 bg-black/40 border border-gray-800 mb-1" data-charid="${c.id}">
+         <img src="${img}" class="w-8 h-8 rounded-full object-cover flex-shrink-0">
+         <div class="flex-1 min-w-0">
+          <div class="font-mono text-xs text-white leading-tight">${c.isClassified?'[ CLASSIFIED ]':c.name}
+           ${pl?`<span class="ml-1 text-[9px]" style="color:${pl.color}">[${pl.name}]</span>`:''}
+          </div>
+         </div>
+         <input type="text" value="${role}" placeholder="Rol/Rütbe..."
+          class="w-32 bg-black/60 border border-gray-700 text-gray-300 font-mono text-[10px] px-2 py-1 focus:border-cyber-blue outline-none"
+          onchange="Admin.setOrgMemberRole('${o.id}','${c.id}',this.value)">
+        </div>`;
+       }).join('');
+      }
+     }
      const _oh=document.getElementById('o-heat'); if(_oh) _oh.value=o.heatLevel||'Clean';
  const _ocp=document.getElementById('o-color-pick'); if(_ocp)_ocp.value=o.color||'#00a2ff'; 
     document.getElementById('o-terr').value = o.territories ? o.territories.join(', ') : '';
@@ -6031,7 +6235,7 @@ body.is-mobile #radar-container { height: calc(100vh - 120px); }
 
      banner: document.getElementById('o-banner') ? document.getElementById('o-banner').value : (existing && existing.banner || ''),
      status:      document.getElementById('o-status')?.value || (existing?.status || 'Active'),
-     members: Array.from(document.querySelectorAll('#o-member-list .org-member-item')).map(el=>({charId:el.dataset.charid,role:el.dataset.role||''})),
+          memberRoles: (() => { try { const _oid=document.getElementById('o-id')?.value; const _o=DB.organizations.find(x=>x.id===_oid); return _o?.memberRoles||{}; } catch(e){ return {}; } })(),
      threatLevel: document.getElementById('o-threat')?.value || (existing?.threatLevel || 'Low'),
      heatLevel:   document.getElementById('o-heat')?.value   || (existing?.heatLevel   || 'Clean'),
      memberCount: membersVal !== '' ? parseInt(membersVal) : null,
@@ -6071,7 +6275,14 @@ body.is-mobile #radar-container { height: calc(100vh - 120px); }
    editVeh(id) {
     const v = DB.vehicles.find(x => x.id === id);
     if(!v) return;
-    document.getElementById('v-id').value = v.id; document.getElementById('v-model').value = v.model;
+    document.getElementById('v-id').value = v.id; const _vbr=document.getElementById('v-brand');if(_vbr)_vbr.value=v.brand||'';
+     const _vyr=document.getElementById('v-year');if(_vyr)_vyr.value=v.year||'';
+     const _vcl=document.getElementById('v-color-name');if(_vcl)_vcl.value=v.color||'';
+     const _vhp=document.getElementById('v-hp');if(_vhp)_vhp.value=v.hp||'';
+     const _vac=document.getElementById('v-acc');if(_vac)_vac.value=v.acc||'';
+     const _vts=document.getElementById('v-topspeed');if(_vts)_vts.value=v.topSpeed||'';
+     const _vpr=document.getElementById('v-price');if(_vpr)_vpr.value=v.price||'';
+     document.getElementById('v-model').value = v.model;
     document.getElementById('v-plate').value = v.plate || ''; document.getElementById('v-perf').value = v.perf || '';
     document.getElementById('v-owner').value = v.owner || ''; document.getElementById('v-heat').value = v.heatLevel || 'Clean';
     document.getElementById('v-mapx').value = v.mapX || ''; document.getElementById('v-mapy').value = v.mapY || '';
@@ -6082,8 +6293,20 @@ body.is-mobile #radar-container { height: calc(100vh - 120px); }
     if(e) e.preventDefault();
     const id = document.getElementById('v-id').value || `veh_${Date.now()}`;
     const data = {
-     id, model: document.getElementById('v-model').value, plate: document.getElementById('v-plate').value,
-     perf: document.getElementById('v-perf').value, owner: document.getElementById('v-owner').value,
+     id,
+     brand:    (document.getElementById('v-brand')||{}).value    || '',
+     model:    document.getElementById('v-model')?.value    || '',
+     vmodel:   document.getElementById('v-model')?.value    || '',
+     year:     (document.getElementById('v-year')||{}).value||'',
+     color:    (document.getElementById('v-color-name')||{}).value||'',
+     hp:       (document.getElementById('v-hp')||{}).value||'',
+     acc:      document.getElementById('v-acc')?.value||'',
+     topspeedMph: document.getElementById('v-topspeed-mph')?.value||'',
+     topSpeed: (document.getElementById('v-topspeed')||{}).value||'',
+     price:    (document.getElementById('v-price')||{}).value||'',
+     plate:    document.getElementById('v-plate')?.value    || '',
+     perf:     document.getElementById('v-perf')?.value     || '',
+     owner:    document.getElementById('v-owner')?.value    || '',
      heatLevel: document.getElementById('v-heat').value, 
      mapX: document.getElementById('v-mapx').value || null, mapY: document.getElementById('v-mapy').value || null,
      image: document.getElementById('v-img').value, link: document.getElementById('v-link').value
@@ -6613,7 +6836,8 @@ body.is-mobile #radar-container { height: calc(100vh - 120px); }
      this.updateRepSlider(document.getElementById('c-rep-global') || {value:'0'});
     }
     if(prefix === 'org') {
-     const oml = document.getElementById('o-member-list'); if(oml) oml.innerHTML = '';
+     const omDiv = document.getElementById('admin-org-members');
+     if(omDiv) { omDiv.innerHTML = ''; omDiv.style.display = 'none'; }
     }
     if(prefix === 'case') {
      const tl = document.getElementById('case-tag-list'); if(tl) tl.innerHTML = '';
@@ -6839,6 +7063,33 @@ body.is-mobile #radar-container { height: calc(100vh - 120px); }
     Storage.save(DB); this.loadChars(); UI.renderAll();
    },
 
+            renderOrgMemberRow(c, orgId, currentRole) {
+                const list = document.getElementById('o-member-list');
+                if(!list) return;
+                const d = document.createElement('div');
+                d.className = 'flex items-center gap-3 p-2 bg-black/40 border border-gray-800 org-member-item';
+                d.dataset.charid = c.id;
+                d.dataset.role   = currentRole;
+                const img = c.image || 'https://ui-avatars.com/api/?name='+encodeURIComponent(c.name)+'&background=000&color=fff&size=32';
+                d.innerHTML = `<img src="${img}" class="w-8 h-8 rounded-full object-cover flex-shrink-0 border border-gray-700">
+                    <div class="flex-1 min-w-0">
+                        <div class="font-mono text-xs text-white truncate">${c.name}</div>
+                        <div class="font-mono text-[9px] text-gray-500">${c.alias||''}</div>
+                    </div>
+                    <input type="text" value="${currentRole}"
+                        placeholder="Rol / Rütbe..."
+                        class="w-32 bg-black/60 border border-gray-700 text-cyber-blue font-mono text-[10px] px-2 py-1 focus:border-cyber-blue outline-none"
+                        oninput="this.parentElement.dataset.role=this.value">`;
+                list.appendChild(d);
+            },
+            setOrgMemberRole(orgId, charId, role) {
+                const o = DB.organizations.find(x=>x.id===orgId);
+                if(!o) return;
+                if(!o.memberRoles) o.memberRoles = {};
+                o.memberRoles[charId] = role;
+                Storage.save(DB);
+                try { addAuditLog('edit','org',orgId,'Rol güncellendi: '+role); } catch(e) {}
+            },
             addOrgMember() {
                 const sel=document.getElementById('o-member-char');
                 const roleEl=document.getElementById('o-member-role');
