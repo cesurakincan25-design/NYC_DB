@@ -2,7 +2,7 @@
 <html lang="en"><head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>NYC_DB</title>
+    <title>NYC_DB_V2</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
@@ -172,7 +172,7 @@ body.is-mobile #radar-container { height: calc(100vh - 120px); }
   window._fbFirestoreReady = true;
   window.dispatchEvent(new Event('firebase-ready'));
 </script>
-<script src="config.js?v=2"></script>
+<script src="config.js?v=3"></script>
 </head>
 <body class="bg-cyber-bg font-body bg-grid flex flex-col h-screen text-gray-300">
 <body class="bg-cyber-bg font-body bg-grid flex flex-col h-screen text-gray-300">
@@ -3200,6 +3200,10 @@ body.is-mobile #radar-container { height: calc(100vh - 120px); }
                 <div class="z-10 flex-1">
                     <span class="text-cyber-blue block text-xs mb-3 flex items-center" data-i18n="psych_intel">PSYCHOLOGICAL / HISTORICAL INTEL</span>
                     <p id="modal-story" class="text-gray-300 text-sm md:text-base leading-relaxed whitespace-pre-line text-justify"></p>
+                    <!-- Galeri Butonu -->
+                    <button id="modal-gallery-btn" class="cyber-button px-4 py-2 text-xs click-sfx mt-2" style="display:none;align-items:center;gap:6px">
+                      <i class="fas fa-images mr-1"></i>GALERİ
+                    </button>
                     <div id="modal-theme-song-player" class="mt-4"></div>
                 </div>
 
@@ -3354,5 +3358,5 @@ body.is-mobile #radar-container { height: calc(100vh - 120px); }
     </div>
 
 <!-- ── Shared Engine ── -->
-<script src="engine.js?v=2"></script>
+<script src="engine.js?v=3"></script>
 </body></html>
