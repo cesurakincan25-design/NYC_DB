@@ -172,7 +172,7 @@ body.is-mobile #radar-container { height: calc(100vh - 120px); }
   window._fbFirestoreReady = true;
   window.dispatchEvent(new Event('firebase-ready'));
 </script>
-<script src="config.js?v=3"></script>
+<script src="config.js?v=4"></script>
 </head>
 <body class="bg-cyber-bg font-body bg-grid flex flex-col h-screen text-gray-300">
 <body class="bg-cyber-bg font-body bg-grid flex flex-col h-screen text-gray-300">
@@ -2385,7 +2385,7 @@ body.is-mobile #radar-container { height: calc(100vh - 120px); }
                 <div id="view-leaderboard" class="view-section hidden" style="height:100%;overflow-y:auto;padding:24px">
                     <div class="flex justify-between items-center mb-6">
                         <h2 class="font-display text-2xl text-cyber-blue uppercase tracking-widest"><i class="fas fa-trophy mr-3"></i>Leaderboards</h2>
-                        <button onclick="Admin.promptAdmin();setTimeout(()=>{Admin.switchTab('leaderboard');},300)" class="cyber-button px-4 py-2 text-xs click-sfx"><i class="fas fa-plus mr-1"></i>Yeni Leaderboard</button>
+                        <button onclick="UI.promptAdmin();setTimeout(()=>{Admin.switchTab('leaderboard');},300)" class="cyber-button px-4 py-2 text-xs click-sfx"><i class="fas fa-plus mr-1"></i>Yeni Leaderboard</button>
                     </div>
                     <div id="leaderboard-view-container" class="space-y-6"></div>
                 </div>
@@ -2677,6 +2677,14 @@ body.is-mobile #radar-container { height: calc(100vh - 120px); }
                         </div>
                     </div>
 
+                    <div id="admin-leaderboard" class="admin-panel glass-panel p-6 cyber-border hidden">
+                        <div class="flex justify-between items-center mb-4">
+                          <h3 class="font-display text-lg text-cyber-blue uppercase tracking-widest"><i class="fas fa-trophy mr-2"></i>Leaderboard Yönetimi</h3>
+                          <button onclick="Admin.createLeaderboard()" class="cyber-button px-4 py-2 text-xs click-sfx"><i class="fas fa-plus mr-1"></i>Yeni Leaderboard</button>
+                        </div>
+                        <div id="admin-leaderboard-list" class="space-y-2 mb-6"></div>
+                        <div id="admin-leaderboard-editor" class="hidden"></div>
+                    </div>
                     <div id="admin-backup" class="admin-panel glass-panel p-6 cyber-border hidden">
                         <div class="flex items-center justify-between mb-4">
                             <h3 class="font-mono text-lg uppercase tracking-widest" style="color:var(--neon-blue,#00a2ff)">
@@ -3358,5 +3366,5 @@ body.is-mobile #radar-container { height: calc(100vh - 120px); }
     </div>
 
 <!-- ── Shared Engine ── -->
-<script src="engine.js?v=3"></script>
+<script src="engine.js?v=5"></script>
 </body></html>
