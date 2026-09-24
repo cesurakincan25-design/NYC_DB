@@ -1006,22 +1006,28 @@ var UI = {
     const savedTheme = localStorage.getItem(CFG.themeKey) || '';
     if(savedTheme) UI.applyTheme(savedTheme);
 
-    // ── Deep-link: #char=ID ile direkt karakter modalı açma ─────────────
+    // ── Deep-link: #char=ID / #vehicle=ID / #org=ID / #property=ID ──────
     // Kullanım: nyc_db.html#char=abc123
-    // NYC_RP Lore Keeper "DB'de Aç" butonu bu hash'i kullanır.
+    // NYC_RP "DB'de Aç" butonu bu hash'i kullanır.
     (function() {
-      function _handleCharHash() {
+      function _handleDeepLink() {
         const hash = location.hash;
         if (!hash) return;
-        const m = hash.match(/[#&]char=([^&]+)/);
-        if (!m) return;
-        const charId = decodeURIComponent(m[1]);
-        setTimeout(() => {
-          try { UI.openModal(charId); } catch(e) { console.warn('[hash] openModal failed:', e); }
-        }, 400);
+        // #char=ID
+        const charM = hash.match(/[#&]char=([^&]+)/);
+        if (charM) { const id = decodeURIComponent(charM[1]); setTimeout(() => { try { UI.openModal(id); } catch(e) {} }, 400); return; }
+        // #vehicle=ID
+        const vehM = hash.match(/[#&]vehicle=([^&]+)/);
+        if (vehM) { const id = decodeURIComponent(vehM[1]); setTimeout(() => { try { UI.openVehicleModal(id); } catch(e) { try { UI.openModal(id); } catch(e2) {} } }, 400); return; }
+        // #org=ID
+        const orgM = hash.match(/[#&]org=([^&]+)/);
+        if (orgM) { const id = decodeURIComponent(orgM[1]); setTimeout(() => { try { UI.openOrgModal(id); } catch(e) { try { UI.openModal(id); } catch(e2) {} } }, 400); return; }
+        // #property=ID
+        const propM = hash.match(/[#&]property=([^&]+)/);
+        if (propM) { const id = decodeURIComponent(propM[1]); setTimeout(() => { try { UI.openPropertyModal(id); } catch(e) { try { UI.openModal(id); } catch(e2) {} } }, 400); return; }
       }
-      _handleCharHash();
-      window.addEventListener('hashchange', _handleCharHash);
+      _handleDeepLink();
+      window.addEventListener('hashchange', _handleDeepLink);
     })();
     
 
