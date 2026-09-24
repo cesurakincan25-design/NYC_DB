@@ -3234,10 +3234,41 @@ var Admin = {
     document.getElementById('char-form').scrollIntoView({ behavior: 'smooth', block: 'start' });
    },
 
-   _aiSyncLore() {
+   // ── Kanon markdown'ı section'lara parse et ──────────────────────────
+   _parseKanonSections(md) {
+    if(!md) return {};
+    const sections = {};
+    const parts = md.split(/\n(?=#{1,3}\s)/);
+    for(const part of parts) {
+      const m = part.match(/^#{1,3}\s+(.+)\n([\s\S]*)/);
+      if(m) {
+        const key = m[1].trim().toLowerCase()
+          .replace(/ö/g,'o').replace(/ü/g,'u').replace(/ş/g,'s')
+          .replace(/ı/g,'i').replace(/ğ/g,'g').replace(/ç/g,'c')
+          .replace(/[^a-z0-9]/g,'_').replace(/__+/g,'_').replace(/^_|_$/g,'');
+        sections[key] = m[2].trim();
+        const aliases = {
+          'ozet':'summary','arka_plan':'background','gecmis':'background',
+          'kisilik':'personality','karakter':'personality',
+          'hedefler':'goals','motivasyon':'goals','hedefler_motivasyon':'goals',
+          'gizli':'secrets','gizli_bilgiler':'secrets','sirlar':'secrets',
+          'etiketler':'tags'
+        };
+        if(aliases[key]) sections[aliases[key]] = m[2].trim();
+      }
+    }
+    if(!sections.summary) {
+      const firstBlock = md.replace(/^#{1,3}\s+.+\n/, '').trim();
+      if(firstBlock) sections._intro = firstBlock;
+    }
+    return sections;
+   },
+
+   async _aiSyncLore() {
     const btn = document.getElementById('btn-ai-lore');
     const charId = document.getElementById('c-id')?.value;
     if(!charId) { alert('Önce bir karakter seçin.'); return; }
+    if(btn) { btn.disabled=true; btn.innerHTML='<i class="fas fa-spinner fa-spin"></i> Okunuyor…'; }
 
     const c = DB.characters.find(x => x.id === charId) || {};
     const orgs = (c.organizations||[c.organization||'']).filter(Boolean)
@@ -3247,65 +3278,96 @@ var Admin = {
       return t ? { name: t.name, type: r.type } : null;
     }).filter(Boolean);
 
-    // ── SUMMARY ──────────────────────────────────────────────────────────────
-    const parts = [];
-    if(c.name)        parts.push(c.name);
-    if(c.alias)       parts.push(`(${c.alias})`);
-    if(c.nationality) parts.push(`— ${c.nationality} kökenli`);
-    if(c.age)         parts.push(`${c.age} yaşında`);
-    const orgStr = orgs.length ? orgs.join(', ') : 'bağımsız';
-    let summary = parts.join(' ');
-    summary += `, NYC'de ${orgStr} çevrelerinde faaliyet gösteren`;
-    if(c.threatLevel && c.threatLevel !== 'Low') summary += ` ${c.threatLevel.toLowerCase()} tehdit seviyeli`;
-    summary += ' bir isim.';
-    if(c.status === 'Deceased') summary += ` Artık hayatta değil${c.statusNote ? ' — ' + c.statusNote : ''}.`;
-    else if(c.status === 'Inactive') summary += ` Şu an pasif durumda${c.statusNote ? ' — ' + c.statusNote : ''}.`;
+    // ── Önce NYC_RP KanonDB'den oku (Firebase kanon/ koleksiyonu) ────────
+    let summary='', background='', personality='', goals='', secrets='';
+    let uniqueTags=[];
+    let fromKanon = false;
 
-    // ── BACKGROUND ───────────────────────────────────────────────────────────
-    const background = c.story || '';
+    try {
+      // Karakter slug'ı hesapla (KanonDB._slug mantığıyla aynı)
+      const slug = (c.name||'').toLowerCase()
+        .replace(/[^a-z0-9ğüşıöç]/g,'_').replace(/__+/g,'_').replace(/^_|_$/g,'');
+      const kanonKey = 'chars/' + slug;
 
-    // ── PERSONALITY ──────────────────────────────────────────────────────────
-    const persTraits = [];
-    const threat = c.threatLevel || '';
-    const heat   = c.heatLevel   || '';
-    if(threat === 'Critical' || threat === 'High') persTraits.push('hesaplı ve tehlikeli');
-    else if(threat === 'Medium') persTraits.push('temkinli');
-    else if(threat === 'Low')    persTraits.push('alçak profilli');
-    if(heat === 'Hot' || heat === 'Burning') persTraits.push('dikkat çeken, ısınan biri');
-    else if(heat === 'Clean')                persTraits.push('radarların altında kalmayı tercih eden');
-    if(c.isClassified) persTraits.push('kimliği gizli tutulan');
-    const personality = persTraits.length
-      ? `${c.name||'Bu karakter'} ${persTraits.join(', ')} biri olarak tanımlanıyor.`
-      : '';
+      const fbApp  = window._fbApp  || (typeof getApps==='function' && getApps()[0]);
+      const fbDb   = window._fbDb;
+      const fbFs   = window._fbFirestore;
+      if(fbDb && fbFs) {
+        const { doc, getDoc } = fbFs;
+        const snap = await getDoc(doc(fbDb, 'kanon', kanonKey));
+        if(snap.exists()) {
+          const data = snap.data();
+          const md = data.content || '';
+          if(md.trim()) {
+            const sec = this._parseKanonSections(md);
+            summary     = sec.summary     || sec._intro  || '';
+            background  = sec.background  || '';
+            personality = sec.personality || '';
+            goals       = sec.goals       || '';
+            secrets     = sec.secrets     || '';
+            const rawTagStr = sec.tags || sec.etiketler || '';
+            uniqueTags  = rawTagStr ? rawTagStr.split(/[,\n]/).map(t=>t.trim()).filter(Boolean) : [];
+            fromKanon   = !!(summary || background);
+          }
+        }
+      }
+    } catch(ke) { console.warn('[LoreSync] Kanon okuma hatası:', ke.message); }
 
-    // ── GOALS ────────────────────────────────────────────────────────────────
-    const goalParts = [];
-    if(orgs.length) goalParts.push(`${orgs.join(' ve ')} içindeki konumunu korumak`);
-    if(rels.length) {
+    // ── Eksik alanlar için deterministik fallback ────────────────────────
+    if(!summary) {
+      const parts = [];
+      if(c.name)        parts.push(c.name);
+      if(c.alias)       parts.push(`(${c.alias})`);
+      if(c.nationality) parts.push(`— ${c.nationality} kökenli`);
+      if(c.age)         parts.push(`${c.age} yaşında`);
+      const orgStr = orgs.length ? orgs.join(', ') : 'bağımsız';
+      summary = parts.join(' ');
+      summary += `, NYC'de ${orgStr} çevrelerinde faaliyet gösteren`;
+      if(c.threatLevel && c.threatLevel !== 'Low') summary += ` ${c.threatLevel.toLowerCase()} tehdit seviyeli`;
+      summary += ' bir isim.';
+      if(c.status === 'Deceased') summary += ` Artık hayatta değil${c.statusNote ? ' — ' + c.statusNote : ''}.`;
+      else if(c.status === 'Inactive') summary += ` Şu an pasif durumda${c.statusNote ? ' — ' + c.statusNote : ''}.`;
+    }
+    if(!background) background = c.story || '';
+    if(!personality) {
+      const threat = c.threatLevel||'', heat = c.heatLevel||'';
+      const persTraits = [];
+      if(threat === 'Critical' || threat === 'High') persTraits.push('hesaplı ve tehlikeli');
+      else if(threat === 'Medium') persTraits.push('temkinli');
+      else if(threat === 'Low')    persTraits.push('alçak profilli');
+      if(heat === 'Hot' || heat === 'Burning') persTraits.push('dikkat çeken, ısınan biri');
+      else if(heat === 'Clean')                persTraits.push('radarların altında kalmayı tercih eden');
+      if(c.isClassified) persTraits.push('kimliği gizli tutulan');
+      personality = persTraits.length ? `${c.name||'Bu karakter'} ${persTraits.join(', ')} biri olarak tanımlanıyor.` : '';
+    }
+    if(!goals) {
+      const goalParts = [];
+      if(orgs.length) goalParts.push(`${orgs.join(' ve ')} içindeki konumunu korumak`);
       const allies = rels.filter(r=>['ally','partner','friend','associate'].some(k=>r.type.toLowerCase().includes(k)));
       const enemies = rels.filter(r=>['enemy','rival','target','hostile'].some(k=>r.type.toLowerCase().includes(k)));
       if(allies.length) goalParts.push(`${allies.map(r=>r.name).join(', ')} ile iş birliği`);
       if(enemies.length) goalParts.push(`${enemies.map(r=>r.name).join(', ')} ile hesaplaşma`);
+      goals = goalParts.length ? goalParts.join('; ') + '.' : '';
     }
-    const goals = goalParts.length ? goalParts.join('; ') + '.' : '';
+    if(!secrets) {
+      secrets = c.isClassified
+        ? `${c.name||'Karakterin'} gerçek kimliği ve arka planı sınıflandırılmış bilgi kapsamında.`
+        : (c.statusNote && c.status !== 'Active' ? `Durum notu: ${c.statusNote}` : '');
+    }
+    if(!uniqueTags.length) {
+      const threat = c.threatLevel||'', heat = c.heatLevel||'';
+      const rawTags = [];
+      if(c.nationality) rawTags.push(c.nationality.toLowerCase());
+      orgs.forEach(o => rawTags.push(o.toLowerCase().replace(/\s+/g,'-')));
+      if(threat && threat !== 'Low') rawTags.push(threat.toLowerCase());
+      if(heat && heat !== 'Clean')   rawTags.push(heat.toLowerCase());
+      if(c.status === 'Deceased') rawTags.push('deceased');
+      if(c.isClassified)          rawTags.push('classified');
+      rels.slice(0,2).forEach(r => rawTags.push(r.type.toLowerCase().replace(/\s+/g,'-')));
+      uniqueTags = [...new Set(rawTags)].slice(0,8);
+    }
 
-    // ── SECRETS ──────────────────────────────────────────────────────────────
-    const secrets = c.isClassified
-      ? `${c.name||'Karakterin'} gerçek kimliği ve arka planı sınıflandırılmış bilgi kapsamında.`
-      : (c.statusNote && c.status !== 'Active' ? `Durum notu: ${c.statusNote}` : '');
-
-    // ── TAGS ─────────────────────────────────────────────────────────────────
-    const tags = [];
-    if(c.nationality) tags.push(c.nationality.toLowerCase());
-    orgs.forEach(o => tags.push(o.toLowerCase().replace(/\s+/g,'-')));
-    if(threat && threat !== 'Low') tags.push(threat.toLowerCase());
-    if(heat && heat !== 'Clean')   tags.push(heat.toLowerCase());
-    if(c.status === 'Deceased') tags.push('deceased');
-    if(c.isClassified)          tags.push('classified');
-    rels.slice(0,2).forEach(r => tags.push(r.type.toLowerCase().replace(/\s+/g,'-')));
-    const uniqueTags = [...new Set(tags)].slice(0,8);
-
-    // ── FORM'A DOLDUR ─────────────────────────────────────────────────────────
+    // ── FORM'A DOLDUR ────────────────────────────────────────────────────
     const _sv = (id, val) => { const el=document.getElementById(id); if(el && val) el.value = val; };
     _sv('c-lore-summary',     summary);
     _sv('c-lore-background',  background);
@@ -3315,7 +3377,10 @@ var Admin = {
     const tagsEl = document.getElementById('c-lore-tags');
     if(tagsEl) tagsEl.value = uniqueTags.join(', ');
 
-    if(btn) { btn.innerHTML = '<i class="fas fa-check" style="color:#4db880"></i> Dolduruldu — Kaydet!'; }
+    const label = fromKanon
+      ? '<i class="fas fa-check" style="color:#4db880"></i> Kanon\'dan aktarıldı — Kaydet!'
+      : '<i class="fas fa-check" style="color:#4db880"></i> Dolduruldu — Kaydet!';
+    if(btn) { btn.disabled=false; btn.innerHTML = label; }
     setTimeout(()=>{ if(btn) btn.innerHTML = '<i class="fas fa-magic"></i> SENKRONIZE ET'; }, 3500);
    },
 
