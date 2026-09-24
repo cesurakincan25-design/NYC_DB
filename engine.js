@@ -3173,9 +3173,150 @@ var Admin = {
     const repSlider = document.getElementById('c-rep-global');
     if(repSlider) Admin.updateRepSlider(repSlider);
 
-    
+    // ── LORE ALANLARI ──────────────────────────────────────────────────────
+    // Form'a lore bölümü yoksa dinamik inject et
+    if(!document.getElementById('lore-section')) {
+     const charForm = document.getElementById('char-form');
+     if(charForm) {
+      const loreHTML = `
+<div id="lore-section" style="margin-top:24px;border:1px solid #00a2ff33;padding:16px;background:#050505">
+  <div style="color:#00a2ff;font-family:monospace;font-size:11px;letter-spacing:2px;margin-bottom:12px;border-bottom:1px solid #00a2ff33;padding-bottom:8px">
+    <i class="fas fa-book-open" style="margin-right:6px"></i>LORE — NYC_RP ENTEGRASYONU
+  </div>
+  <div style="display:grid;gap:10px">
+    <div>
+      <label style="display:block;color:#9ca3af;font-size:10px;letter-spacing:1px;margin-bottom:4px">ÖZET (Lore Keeper'da gösterilir)</label>
+      <textarea id="c-lore-summary" rows="3" placeholder="1-2 paragraf kısa karakter özeti..." style="width:100%;background:#0a0a0a;border:1px solid #374151;color:#e5e7eb;padding:8px;font-size:12px;font-family:monospace;resize:vertical"></textarea>
+    </div>
+    <div>
+      <label style="display:block;color:#9ca3af;font-size:10px;letter-spacing:1px;margin-bottom:4px">ARKA PLAN</label>
+      <textarea id="c-lore-background" rows="3" placeholder="Karakterin geçmişi, nereden geldiği..." style="width:100%;background:#0a0a0a;border:1px solid #374151;color:#e5e7eb;padding:8px;font-size:12px;font-family:monospace;resize:vertical"></textarea>
+    </div>
+    <div>
+      <label style="display:block;color:#9ca3af;font-size:10px;letter-spacing:1px;margin-bottom:4px">KİŞİLİK</label>
+      <textarea id="c-lore-personality" rows="2" placeholder="Kişilik özellikleri, tavır..." style="width:100%;background:#0a0a0a;border:1px solid #374151;color:#e5e7eb;padding:8px;font-size:12px;font-family:monospace;resize:vertical"></textarea>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div>
+        <label style="display:block;color:#9ca3af;font-size:10px;letter-spacing:1px;margin-bottom:4px">HEDEFLER / MOTİVASYON</label>
+        <textarea id="c-lore-goals" rows="2" placeholder="Ne istiyor, neden burada..." style="width:100%;background:#0a0a0a;border:1px solid #374151;color:#e5e7eb;padding:8px;font-size:12px;font-family:monospace;resize:vertical"></textarea>
+      </div>
+      <div>
+        <label style="display:block;color:#ff2a2a;font-size:10px;letter-spacing:1px;margin-bottom:4px"><i class="fas fa-lock" style="margin-right:4px"></i>GİZLİ BİLGİLER (sadece admin)</label>
+        <textarea id="c-lore-secrets" rows="2" placeholder="Kimsenin bilmediği şeyler..." style="width:100%;background:#0a0a0a;border:1px solid #ff2a2a44;color:#e5e7eb;padding:8px;font-size:12px;font-family:monospace;resize:vertical"></textarea>
+      </div>
+    </div>
+    <div>
+      <label style="display:block;color:#9ca3af;font-size:10px;letter-spacing:1px;margin-bottom:4px">KANON TAGS (virgülle ayır)</label>
+      <input id="c-lore-tags" type="text" placeholder="detektif, mafia, undercover..." style="width:100%;background:#0a0a0a;border:1px solid #374151;color:#e5e7eb;padding:8px;font-size:12px;font-family:monospace">
+    </div>
+  </div>
+  <div style="margin-top:12px;display:flex;align-items:center;justify-content:space-between">
+    <span style="color:#4b5563;font-size:10px"><i class="fas fa-sync-alt" style="margin-right:4px"></i>Kaydedildiğinde NYC_RP Lore Keeper ile otomatik sync olur</span>
+    <button type="button" id="btn-ai-lore" onclick="Admin._aiSyncLore()" style="background:linear-gradient(135deg,#7c3aed,#4a8fe2);border:none;color:#fff;padding:6px 14px;font-size:10px;font-family:monospace;letter-spacing:1px;cursor:pointer;border-radius:4px;display:flex;align-items:center;gap:6px">
+      <i class="fas fa-magic"></i> AI İLE SENKRONIZE ET
+    </button>
+  </div>
+</div>`;
+      charForm.insertAdjacentHTML('beforeend', loreHTML);
+     }
+    }
+    // Lore değerlerini doldur
+    const lore = c.lore || {};
+    const _lf = (id, val) => { const el = document.getElementById(id); if(el) el.value = val || ''; };
+    _lf('c-lore-summary',     lore.summary     || '');
+    _lf('c-lore-background',  lore.background  || '');
+    _lf('c-lore-personality', lore.personality || '');
+    _lf('c-lore-goals',       lore.goals       || '');
+    _lf('c-lore-secrets',     lore.secrets     || '');
+    _lf('c-lore-tags',        (lore.tags || []).join(', '));
 
     document.getElementById('char-form').scrollIntoView({ behavior: 'smooth', block: 'start' });
+   },
+
+   _aiSyncLore() {
+    const btn = document.getElementById('btn-ai-lore');
+    const charId = document.getElementById('c-id')?.value;
+    if(!charId) { alert('Önce bir karakter seçin.'); return; }
+
+    const c = DB.characters.find(x => x.id === charId) || {};
+    const orgs = (c.organizations||[c.organization||'']).filter(Boolean)
+      .map(oid => DB.organizations.find(o=>o.id===oid)?.name || oid);
+    const rels = (c.relationships||[]).map(r => {
+      const t = DB.characters.find(x=>x.id===r.targetId);
+      return t ? { name: t.name, type: r.type } : null;
+    }).filter(Boolean);
+
+    // ── SUMMARY ──────────────────────────────────────────────────────────────
+    const parts = [];
+    if(c.name)        parts.push(c.name);
+    if(c.alias)       parts.push(`(${c.alias})`);
+    if(c.nationality) parts.push(`— ${c.nationality} kökenli`);
+    if(c.age)         parts.push(`${c.age} yaşında`);
+    const orgStr = orgs.length ? orgs.join(', ') : 'bağımsız';
+    let summary = parts.join(' ');
+    summary += `, NYC'de ${orgStr} çevrelerinde faaliyet gösteren`;
+    if(c.threatLevel && c.threatLevel !== 'Low') summary += ` ${c.threatLevel.toLowerCase()} tehdit seviyeli`;
+    summary += ' bir isim.';
+    if(c.status === 'Deceased') summary += ` Artık hayatta değil${c.statusNote ? ' — ' + c.statusNote : ''}.`;
+    else if(c.status === 'Inactive') summary += ` Şu an pasif durumda${c.statusNote ? ' — ' + c.statusNote : ''}.`;
+
+    // ── BACKGROUND ───────────────────────────────────────────────────────────
+    const background = c.story || '';
+
+    // ── PERSONALITY ──────────────────────────────────────────────────────────
+    const persTraits = [];
+    const threat = c.threatLevel || '';
+    const heat   = c.heatLevel   || '';
+    if(threat === 'Critical' || threat === 'High') persTraits.push('hesaplı ve tehlikeli');
+    else if(threat === 'Medium') persTraits.push('temkinli');
+    else if(threat === 'Low')    persTraits.push('alçak profilli');
+    if(heat === 'Hot' || heat === 'Burning') persTraits.push('dikkat çeken, ısınan biri');
+    else if(heat === 'Clean')                persTraits.push('radarların altında kalmayı tercih eden');
+    if(c.isClassified) persTraits.push('kimliği gizli tutulan');
+    const personality = persTraits.length
+      ? `${c.name||'Bu karakter'} ${persTraits.join(', ')} biri olarak tanımlanıyor.`
+      : '';
+
+    // ── GOALS ────────────────────────────────────────────────────────────────
+    const goalParts = [];
+    if(orgs.length) goalParts.push(`${orgs.join(' ve ')} içindeki konumunu korumak`);
+    if(rels.length) {
+      const allies = rels.filter(r=>['ally','partner','friend','associate'].some(k=>r.type.toLowerCase().includes(k)));
+      const enemies = rels.filter(r=>['enemy','rival','target','hostile'].some(k=>r.type.toLowerCase().includes(k)));
+      if(allies.length) goalParts.push(`${allies.map(r=>r.name).join(', ')} ile iş birliği`);
+      if(enemies.length) goalParts.push(`${enemies.map(r=>r.name).join(', ')} ile hesaplaşma`);
+    }
+    const goals = goalParts.length ? goalParts.join('; ') + '.' : '';
+
+    // ── SECRETS ──────────────────────────────────────────────────────────────
+    const secrets = c.isClassified
+      ? `${c.name||'Karakterin'} gerçek kimliği ve arka planı sınıflandırılmış bilgi kapsamında.`
+      : (c.statusNote && c.status !== 'Active' ? `Durum notu: ${c.statusNote}` : '');
+
+    // ── TAGS ─────────────────────────────────────────────────────────────────
+    const tags = [];
+    if(c.nationality) tags.push(c.nationality.toLowerCase());
+    orgs.forEach(o => tags.push(o.toLowerCase().replace(/\s+/g,'-')));
+    if(threat && threat !== 'Low') tags.push(threat.toLowerCase());
+    if(heat && heat !== 'Clean')   tags.push(heat.toLowerCase());
+    if(c.status === 'Deceased') tags.push('deceased');
+    if(c.isClassified)          tags.push('classified');
+    rels.slice(0,2).forEach(r => tags.push(r.type.toLowerCase().replace(/\s+/g,'-')));
+    const uniqueTags = [...new Set(tags)].slice(0,8);
+
+    // ── FORM'A DOLDUR ─────────────────────────────────────────────────────────
+    const _sv = (id, val) => { const el=document.getElementById(id); if(el && val) el.value = val; };
+    _sv('c-lore-summary',     summary);
+    _sv('c-lore-background',  background);
+    _sv('c-lore-personality', personality);
+    _sv('c-lore-goals',       goals);
+    _sv('c-lore-secrets',     secrets);
+    const tagsEl = document.getElementById('c-lore-tags');
+    if(tagsEl) tagsEl.value = uniqueTags.join(', ');
+
+    if(btn) { btn.innerHTML = '<i class="fas fa-check" style="color:#4db880"></i> Dolduruldu — Kaydet!'; }
+    setTimeout(()=>{ if(btn) btn.innerHTML = '<i class="fas fa-magic"></i> SENKRONIZE ET'; }, 3500);
    },
 
    addCharOrg() {
@@ -3290,6 +3431,20 @@ var Admin = {
        }
       });
       return { global: globalScore, level, orgs, notes };
+     })(),
+     lore: (() => {
+      const _gv = id => document.getElementById(id)?.value?.trim() || '';
+      const tagsRaw = _gv('c-lore-tags');
+      const tags = tagsRaw ? tagsRaw.split(',').map(t => t.trim()).filter(Boolean) : [];
+      return {
+       summary:     _gv('c-lore-summary'),
+       background:  _gv('c-lore-background'),
+       personality: _gv('c-lore-personality'),
+       goals:       _gv('c-lore-goals'),
+       secrets:     _gv('c-lore-secrets'),
+       tags,
+       lastUpdated: new Date().toISOString()
+      };
      })()
     };
     
