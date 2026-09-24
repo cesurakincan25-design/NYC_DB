@@ -1005,6 +1005,24 @@ var UI = {
 
     const savedTheme = localStorage.getItem(CFG.themeKey) || '';
     if(savedTheme) UI.applyTheme(savedTheme);
+
+    // ── Deep-link: #char=ID ile direkt karakter modalı açma ─────────────
+    // Kullanım: nyc_db.html#char=abc123
+    // NYC_RP Lore Keeper "DB'de Aç" butonu bu hash'i kullanır.
+    (function() {
+      function _handleCharHash() {
+        const hash = location.hash;
+        if (!hash) return;
+        const m = hash.match(/[#&]char=([^&]+)/);
+        if (!m) return;
+        const charId = decodeURIComponent(m[1]);
+        setTimeout(() => {
+          try { UI.openModal(charId); } catch(e) { console.warn('[hash] openModal failed:', e); }
+        }, 400);
+      }
+      _handleCharHash();
+      window.addEventListener('hashchange', _handleCharHash);
+    })();
     
 
     
