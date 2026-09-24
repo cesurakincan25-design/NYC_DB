@@ -4931,6 +4931,11 @@ var Admin = {
     }
 
     function shouldSkipIntro() {
+     // NYC_RP gibi başka uygulamadan deep-link ile geliyorsak (hash içeriyorsa) intro atla
+     try {
+      var h = location.hash || '';
+      if(/[#&](char|vehicle|org|property)=/.test(h)) return true;
+     } catch(e) {}
      try {
       var ts = localStorage.getItem(BOOT_TS_KEY);
       if(!ts) return false;
